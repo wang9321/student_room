@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}电子科技大学成都学院自习室预约系统{% endblock %}</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.0/font/bootstrap-icons.css">
+
+    <style>
+        /* 确保页脚始终在底部 */
+        html {
+            height: 100%;
+        }
+
+        body {
+            min-height: 100%;
+            position: relative;
+        }
+
+        /* 侧边栏样式 */
+        .sidebar {
+            position: fixed;
+            top: 56px; /* 保持与导航栏实际高度一致 */
+            left: 0;
+            width: 250px;
+            height: calc(100vh - 56px);
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            overflow-y: auto;
+            transition: transform 0.3s ease;
+            z-index: 1000;
+            flex-shrink: 0; /* 防止收缩 */
+        }
+
+        .sidebar.collapsed {
+            transform: translateX(-100%);
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar-content {
+            padding: 20px 0;
+        }
+
+        .sidebar-section {
+            margin-bottom: 25px;
+        }
+
+        .sidebar-section-title {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+            padding: 0 20px;
+        }
+
+        .sidebar .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            padding: 10px 20px;
+            border-radius: 0;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
+            color: white;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar .nav-link i {
+            margin-right: 10px;
+            width: 16px;
+            text-align: center;
+        }
+
+        /* 主内容区域样式 */
+        .main-content-wrapper {
+            margin-left: 0;
+            transition: margin-left 0.3s ease;
+            padding-top: 76px; /* 为固定导航栏留出更多空间 */
+            padding-bottom: 150px; /* 为页脚留出更多空间 */
+        }
+
+        .main-content {
+            min-height: calc(100vh - 226px); /* 减去顶部padding和底部padding */
+        }
+
+        .main-content-wrapper.with-sidebar {
+            margin-left: 250px;
+        }
+
+        .main-content-wrapper.with-sidebar.collapsed {
+            margin-left: 0;
+        }
+
+    
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                max-width: 250px;
+            }
+
+            .main-content-wrapper.with-sidebar {
+                margin-left: 0;
+            }
+        }
+
+        /* 页脚样式 */
+        footer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            transition: margin-left 0.3s ease;
+            z-index: 1; /* 确保在底层 */
+        }
+
+        footer.with-sidebar {
+            margin-left: 250px;
+        }
+
+        footer.with-sidebar.collapsed {
+            margin-left: 0;
+        }
+
+        /* 固定顶部导航栏后的内容偏移 */
+        .navbar-fixed-top + .sidebar,
+        .navbar-fixed-top ~ .main-content-wrapper {
+            margin-top: 0;
+        }
+
+        /* 当前页面高亮 */
+        .sidebar .nav-link.active {
+            background-color: rgba(52, 152, 219, 0.3) !important;
+            border-left: 3px solid #3498db;
+        }
+    </style>
+
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
+        <div class="container-fluid">
+            {% if current_user.is_authenticated %}
+            <!-- 侧边栏切换按钮 -->
+            <button class="btn btn-link text-white me-3" id="sidebarToggle">
+                <i class="bi bi-list fs-4"></i>
+            </button>
+            {% endif %}
+
+            <a class="navbar-brand" href="{{ url_for('main.index') }}">
+                <i class="bi bi-building"></i>
+                电子科技大学成都学院
+            </a>
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('main.index') }}">
+                            <i class="bi bi-house"></i> 首页
+                        </a>
+                    </li>
+                    {% if current_user.is_authenticated %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('student.rooms') if current_user.__class__.__name__ != 'Admin' else url_for('main.rooms_list') }}">
+                            <i class="bi bi-door-open"></i> 自习室
+                        </a>
+                    </li>
+                    {% endif %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('main.help') }}">
+                            <i class="bi bi-question-circle"></i> 帮助
+                        </a>
+                    </li>
+                </ul>
+
+                <ul class="navbar-nav">
+                    {% if current_user.is_authenticated %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown">
+                            {% if current_user.avatar %}
+                            <img src="{{ current_user.avatar }}" alt="头像" class="rounded-circle me-2" style="width: 28px; height: 28px; object-fit: cover;">
+                            {% else %}
+                            <div class="rounded-circle bg-light d-flex align-items-center justify-content-center me-2" style="width: 28px; height: 28px;">
+                                <i class="bi bi-person-fill text-muted"></i>
+                            </div>
+                            {% endif %}
+                            {{ current_user.name }}
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><h6 class="dropdown-header">{{ current_user.__class__.__name__ == 'Admin' and '管理员' or '学生' }}</h6></li>
+                            <li><hr class="dropdown-divider"></li>
+                            {% if current_user.__class__.__name__ == 'Admin' %}
+                            <li><a class="dropdown-item" href="{{ url_for('admin.dashboard') }}">
+                                <i class="bi bi-speedometer2"></i> 仪表盘
+                            </a></li>
+                            {% else %}
+                            <li><a class="dropdown-item" href="{{ url_for('student.dashboard') }}">
+                                <i class="bi bi-speedometer2"></i> 个人中心
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('student.profile') }}">
+                                <i class="bi bi-person"></i> 个人资料
+                            </a></li>
+                            {% endif %}
+                            <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}">
+                                <i class="bi bi-box-arrow-right"></i> 退出登录
+                            </a></li>
+                        </ul>
+                    </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('auth.student_login') }}">
+                            <i class="bi bi-box-arrow-in-right"></i> 学生登录
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('auth.admin_login') }}">
+                            <i class="bi bi-shield-lock"></i> 管理员
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 侧边栏 -->
+    {% if current_user.is_authenticated %}
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h5 class="text-white mb-0">
+                <i class="bi bi-{{ current_user.__class__.__name__ == 'Admin' and 'gear' or 'person' }}"></i>
+                功能菜单
+            </h5>
+        </div>
+
+        <div class="sidebar-content">
+            {% if current_user.__class__.__name__ == 'Admin' %}
+            <!-- 管理员菜单 -->
+            <div class="sidebar-section">
+                <h6 class="sidebar-section-title">
+                    <i class="bi bi-speedometer2"></i> 控制面板
+                </h6>
+                <ul class="nav nav-pills flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin.dashboard') }}">
+                            <i class="bi bi-grid"></i> 仪表盘
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="sidebar-section">
+                <h6 class="sidebar-section-title">
+                    <i class="bi bi-people"></i> 用户管理
+                </h6>
+                <ul class="nav nav-pills flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin.users') }}">
+                            <i class="bi bi-person-lines-fill"></i> 学生列表
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="sidebar-section">
+                <h6 class="sidebar-section-title">
+                    <i class="bi bi-building"></i> 房间管理
+                </h6>
+                <ul class="nav nav-pills flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin.rooms') }}">
+                            <i class="bi bi-door-open"></i> 自习室管理
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="sidebar-section">
+                <h6 class="sidebar-section-title">
+                    <i class="bi bi-calendar-check"></i> 预约管理
+                </h6>
+                <ul class="nav nav-pills flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin.bookings') }}">
+                            <i class="bi bi-list-check"></i> 预约记录
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="sidebar-section">
+                <h6 class="sidebar-section-title">
+                    <i class="bi bi-megaphone"></i> 公告管理
+                </h6>
+                <ul class="nav nav-pills flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin.announcements') }}">
+                            <i class="bi bi-chat-left-text"></i> 公告列表
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="sidebar-section">
+                <h6 class="sidebar-section-title">
+                    <i class="bi bi-bar-chart"></i> 数据管理
+                </h6>
+                <ul class="nav nav-pills flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin.export') }}">
+                            <i class="bi bi-download"></i> 数据导出
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            {% else %}
+            <!-- 学生菜单 -->
+            <div class="sidebar-section">
+                <h6 class="sidebar-section-title">
+                    <i class="bi bi-calendar-plus"></i> 预约管理
+                </h6>
+                <ul class="nav nav-pills flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('student.book_seat') }}">
+                            <i class="bi bi-plus-circle"></i> 预约座位
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('student.my_bookings') }}">
+                            <i class="bi bi-list-ul"></i> 我的预约
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="sidebar-section">
+                <h6 class="sidebar-section-title">
+                    <i class="bi bi-door-open"></i> 自习室浏览
+                </h6>
+                <ul class="nav nav-pills flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('student.rooms') }}">
+                            <i class="bi bi-building"></i> 自习室列表
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="sidebar-section">
+                <h6 class="sidebar-section-title">
+                    <i class="bi bi-person"></i> 个人中心
+                </h6>
+                <ul class="nav nav-pills flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('student.dashboard') }}">
+                            <i class="bi bi-speedometer2"></i> 个人主页
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('student.profile') }}">
+                            <i class="bi bi-person-badge"></i> 个人资料
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- 主内容区域 -->
+    <div class="main-content-wrapper {% if current_user.is_authenticated %}with-sidebar{% endif %}" id="mainContentWrapper">
+
+    <!-- Flash 消息 -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="container">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- 主要内容 -->
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
+  </div>
+
+    <!-- 页脚 -->
+    <footer class="bg-dark text-light py-4 mt-0 {% if current_user.is_authenticated %}with-sidebar{% endif %}" id="mainFooter">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>电子科技大学成都学院</h5>
+                    <p>自习室预约管理系统</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <div class="mb-2">&copy; 2025 电子科技大学成都学院. All rights reserved.</div>
+                    <div>
+                        <a href="{{ url_for('main.about') }}" class="text-light">关于我们</a> |
+                        <a href="{{ url_for('main.contact') }}" class="text-light">联系方式</a> |
+                        <a href="{{ url_for('main.help') }}" class="text-light">帮助中心</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
+    <script>
+    // 侧边栏切换功能
+    $(document).ready(function() {
+        // 检查本地存储中侧边栏的状态
+        var sidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+        var $sidebar = $('#sidebar');
+        var $mainContent = $('#mainContentWrapper');
+        var $footer = $('#mainFooter');
+
+        // 初始化侧边栏状态
+        if (sidebarCollapsed) {
+            $sidebar.addClass('collapsed');
+            $mainContent.addClass('collapsed');
+            $footer.addClass('collapsed');
+        }
+
+        // 侧边栏切换按钮点击事件
+        $('#sidebarToggle').click(function() {
+            $sidebar.toggleClass('collapsed');
+            $mainContent.toggleClass('collapsed');
+            $footer.toggleClass('collapsed');
+
+            // 保存状态到本地存储
+            localStorage.setItem('sidebarCollapsed', $sidebar.hasClass('collapsed'));
+        });
+
+        // 高亮当前页面的菜单项
+        highlightCurrentPage();
+
+        // 响应式处理
+        function handleResize() {
+            if ($(window).width() <= 768) {
+                // 移动设备默认隐藏侧边栏
+                $sidebar.addClass('collapsed');
+                $mainContent.addClass('collapsed');
+                $footer.addClass('collapsed');
+                localStorage.setItem('sidebarCollapsed', 'true');
+            }
+        }
+
+        $(window).resize(handleResize);
+        handleResize(); // 初始调用
+    });
+
+    // 高亮当前页面的菜单项
+    function highlightCurrentPage() {
+        var currentPath = window.location.pathname;
+        $('.sidebar .nav-link').each(function() {
+            var $link = $(this);
+            var href = $link.attr('href');
+
+            // 精确匹配或包含匹配
+            if (href === currentPath || (href && currentPath.startsWith(href) && href !== '/')) {
+                $link.addClass('active');
+                return false; // 找到后退出循环
+            }
+        });
+    }
+
+    // 工具函数
+    function showAddUserModal() {
+        // 这里可以显示添加用户的模态框
+        utils.showToast('功能开发中...', 'info');
+    }
+
+        </script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,652 @@
+{% extends "common/base.html" %}
+
+{% block title %}个人资料 - 电子科技大学成都学院自习室预约系统{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- 页面标题 -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-gradient-primary text-white">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-person-circle me-3" style="font-size: 2rem;"></i>
+                        <div>
+                            <h2 class="mb-1">个人资料</h2>
+                            <p class="mb-0 opacity-75">查看和管理您的个人信息</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- 左侧：个人信息 -->
+        <div class="col-lg-8 mb-4">
+            <div class="card shadow mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-person-badge me-2"></i>基本信息
+                    </h5>
+                    <button class="btn btn-outline-primary btn-sm" onclick="editProfile()">
+                        <i class="bi bi-pencil"></i> 编辑资料
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 text-center mb-4">
+                            {% if current_user.avatar %}
+                            <img src="{{ current_user.avatar }}" alt="头像" class="rounded-circle" style="width: 150px; height: 150px; object-fit: cover;">
+                            {% else %}
+                            <div class="rounded-circle bg-light d-flex align-items-center justify-content-center mx-auto" style="width: 150px; height: 150px;">
+                                <i class="bi bi-person-fill text-muted" style="font-size: 4rem;"></i>
+                            </div>
+                            {% endif %}
+                            <div class="mt-3">
+                                <input type="file" id="avatarInput" accept="image/*" style="display: none;">
+                                <button class="btn btn-outline-primary btn-sm" onclick="document.getElementById('avatarInput').click()">
+                                    <i class="bi bi-camera"></i> 更换头像
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <div class="row mb-3">
+                                <div class="col-sm-4">
+                                    <label class="text-muted small">学号</label>
+                                    <p class="mb-1 fw-bold">{{ current_user.student_id }}</p>
+                                </div>
+                                <div class="col-sm-4">
+                                    <label class="text-muted small">姓名</label>
+                                    <p class="mb-1 fw-bold">{{ current_user.name }}</p>
+                                </div>
+                                <div class="col-sm-4">
+                                    <label class="text-muted small">性别</label>
+                                    <p class="mb-1 fw-bold">{{ current_user.gender|default('未设置') }}</p>
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-sm-4">
+                                    <label class="text-muted small">学院</label>
+                                    <p class="mb-1">{{ current_user.major }}</p>
+                                </div>
+                                <div class="col-sm-4">
+                                    <label class="text-muted small">年级</label>
+                                    <p class="mb-1">{{ current_user.grade }}</p>
+                                </div>
+                                <div class="col-sm-4">
+                                    <label class="text-muted small">班级</label>
+                                    <p class="mb-1">{{ current_user.class_name }}</p>
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-sm-6">
+                                    <label class="text-muted small">邮箱</label>
+                                    <p class="mb-1">
+                                        <i class="bi bi-envelope text-primary"></i>
+                                        {{ current_user.email }}
+                                    </p>
+                                </div>
+                                <div class="col-sm-6">
+                                    <label class="text-muted small">手机号</label>
+                                    <p class="mb-1">
+                                        <i class="bi bi-phone text-success"></i>
+                                        {{ current_user.phone|default('未设置') }}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-12">
+                                    <label class="text-muted small">账户状态</label>
+                                    <div>
+                                        {% if current_user.is_active %}
+                                        <span class="badge bg-success">
+                                            <i class="bi bi-check-circle"></i> 正常
+                                        </span>
+                                        {% else %}
+                                        <span class="badge bg-danger">
+                                            <i class="bi bi-x-circle"></i> 已禁用
+                                        </span>
+                                        {% endif %}
+
+                                        {% if current_user.status == 'active' %}
+                                        <span class="badge bg-primary">
+                                            <i class="bi bi-shield-check"></i> 活跃
+                                        </span>
+                                        {% elif current_user.status == 'suspended' %}
+                                        <span class="badge bg-warning">
+                                            <i class="bi bi-exclamation-triangle"></i> 暂停
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 预约统计 -->
+            <div class="card shadow mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-bar-chart me-2"></i>预约统计
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-3 col-6 mb-3">
+                            <div class="p-3 bg-light rounded">
+                                <h3 class="text-primary mb-1">{{ current_user.total_bookings }}</h3>
+                                <small class="text-muted">总预约次数</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6 mb-3">
+                            <div class="p-3 bg-light rounded">
+                                <h3 class="text-success mb-1">
+                                    {{ current_user.bookings|selectattr('status', 'equalto', 'completed')|list|length }}
+                                </h3>
+                                <small class="text-muted">完成次数</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6 mb-3">
+                            <div class="p-3 bg-light rounded">
+                                <h3 class="text-warning mb-1">{{ current_user.violation_count }}</h3>
+                                <small class="text-muted">违规记录</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6 mb-3">
+                            <div class="p-3 bg-light rounded">
+                                <h3 class="text-info mb-1">{{ current_user.credit_score }}</h3>
+                                <small class="text-muted">信用积分</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 信用积分说明 -->
+                    <div class="alert alert-info mt-3">
+                        <h6><i class="bi bi-info-circle"></i> 信用积分说明</h6>
+                        <ul class="mb-0 small">
+                            <li>初始信用积分为100分</li>
+                            <li>每次按时签到并完成预约可获得积分奖励</li>
+                            <li>违规行为（如未签到、超时使用等）会扣除积分</li>
+                            <li>信用积分低于80分将限制预约功能</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧：快速操作和最近活动 -->
+        <div class="col-lg-4 mb-4">
+            <!-- 快速操作 -->
+            <div class="card shadow mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-lightning me-2"></i>快速操作
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        {% if current_user.can_book() %}
+                        <a href="{{ url_for('student.book_seat') }}" class="btn btn-primary">
+                            <i class="bi bi-plus-circle"></i> 预约座位
+                        </a>
+                        {% else %}
+                        <button class="btn btn-secondary" disabled>
+                            <i class="bi bi-x-circle"></i> 预约功能已受限
+                        </button>
+                        {% endif %}
+
+                        <a href="{{ url_for('student.my_bookings') }}" class="btn btn-outline-info">
+                            <i class="bi bi-calendar-check"></i> 我的预约
+                        </a>
+
+                        <a href="{{ url_for('student.rooms') }}" class="btn btn-outline-success">
+                            <i class="bi bi-door-open"></i> 浏览自习室
+                        </a>
+
+                        <button class="btn btn-outline-warning" onclick="showChangePasswordModal()">
+                            <i class="bi bi-key"></i> 修改密码
+                        </button>
+
+                        <button class="btn btn-outline-secondary" onclick="window.print()">
+                            <i class="bi bi-printer"></i> 打印资料
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 联系信息 -->
+            <div class="card shadow mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-telephone me-2"></i>联系我们
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <small class="text-muted">系统管理员</small>
+                        <p class="mb-1">
+                            <i class="bi bi-envelope text-primary"></i>
+                            admin@cduest.edu.cn
+                        </p>
+                    </div>
+                    <div class="mb-3">
+                        <small class="text-muted">技术支持</small>
+                        <p class="mb-1">
+                            <i class="bi bi-telephone text-success"></i>
+                            028-12345678
+                        </p>
+                    </div>
+                    <div>
+                        <small class="text-muted">办公地点</small>
+                        <p class="mb-1">
+                            <i class="bi bi-geo-alt text-danger"></i>
+                            图书馆一楼服务台
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 使用须知 -->
+            <div class="card shadow">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-book me-2"></i>使用须知
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="small">
+                        <div class="mb-2">
+                            <strong>预约规则：</strong>
+                            <ul class="mb-2">
+                                <li>每天最多可预约2个时段</li>
+                                <li>预约时长最少1小时，最多4小时</li>
+                                <li>提前预约最多7天</li>
+                            </ul>
+                        </div>
+                        <div class="mb-2">
+                            <strong>签到要求：</strong>
+                            <ul class="mb-2">
+                                <li>预约开始前30分钟内可签到</li>
+                                <li>迟到超过15分钟将自动取消</li>
+                                <li>签到后30分钟内必须使用座位</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <strong>注意事项：</strong>
+                            <ul>
+                                <li>请保持自习室安静</li>
+                                <li>离开时请带好个人物品</li>
+                                <li>爱护公共设施</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 编辑个人资料模态框 -->
+<div class="modal fade" id="editProfileModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-pencil"></i> 编辑个人资料
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editProfileForm">
+                <div class="modal-body">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="mb-3">
+                        <label for="editName" class="form-label">姓名 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="editName" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editGender" class="form-label">性别</label>
+                        <select class="form-select" id="editGender" name="gender">
+                            <option value="">请选择</option>
+                            <option value="男">男</option>
+                            <option value="女">女</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editMajor" class="form-label">学院</label>
+                        <input type="text" class="form-control" id="editMajor" name="major" placeholder="例：计算机科学与工程学院">
+                    </div>
+                    <div class="mb-3">
+                        <label for="editGrade" class="form-label">年级</label>
+                        <input type="text" class="form-control" id="editGrade" name="grade" placeholder="例：2021级">
+                    </div>
+                    <div class="mb-3">
+                        <label for="editClass" class="form-label">班级</label>
+                        <input type="text" class="form-control" id="editClass" name="class_name" placeholder="例：计算机科学与技术1班">
+                    </div>
+                    <div class="mb-3">
+                        <label for="editPhone" class="form-label">手机号</label>
+                        <input type="tel" class="form-control" id="editPhone" name="phone" placeholder="请输入11位手机号" pattern="[0-9]{11}">
+                        <div class="form-text">用于接收重要通知，请确保号码正确</div>
+                    </div>
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i>
+                        <small>学号和邮箱为注册时的关键信息，如需修改请联系管理员</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle"></i> 保存修改
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 修改密码模态框 -->
+<div class="modal fade" id="changePasswordModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-key"></i> 修改密码
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="changePasswordForm">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="oldPassword" class="form-label">当前密码</label>
+                        <input type="password" class="form-control" id="oldPassword" name="old_password" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="newPassword" class="form-label">新密码</label>
+                        <input type="password" class="form-control" id="newPassword" name="new_password" required minlength="6">
+                        <div class="form-text">密码长度至少6位</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="confirmPassword" class="form-label">确认新密码</label>
+                        <input type="password" class="form-control" id="confirmPassword" name="confirm_password" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle"></i> 确认修改
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 显示修改密码模态框
+function showChangePasswordModal() {
+    const modal = new bootstrap.Modal(document.getElementById('changePasswordModal'));
+    document.getElementById('changePasswordForm').reset();
+    modal.show();
+}
+
+// 修改密码表单提交
+document.getElementById('changePasswordForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const formData = new FormData(this);
+    const data = Object.fromEntries(formData);
+
+    // 验证新密码
+    if (data.new_password !== data.confirm_password) {
+        utils.showToast('新密码和确认密码不匹配', 'error');
+        return;
+    }
+
+    // 发送修改密码请求
+    fetch('/student/change-password', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams(data)
+    })
+    .then(response => {
+        if (response.redirected) {
+            // 密码修改成功，重定向到登录页
+            utils.showToast('密码修改成功，请重新登录', 'success');
+            setTimeout(() => {
+                window.location.href = response.url;
+            }, 1500);
+        } else {
+            return response.text();
+        }
+    })
+    .then(text => {
+        if (text) {
+            // 如果有错误信息
+            utils.showToast('密码修改失败', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        utils.showToast('修改失败，请稍后重试', 'error');
+    });
+});
+
+// 确认密码验证
+document.getElementById('confirmPassword').addEventListener('input', function() {
+    const newPassword = document.getElementById('newPassword').value;
+    const confirmPassword = this.value;
+
+    if (confirmPassword && newPassword !== confirmPassword) {
+        this.setCustomValidity('密码不匹配');
+    } else {
+        this.setCustomValidity('');
+    }
+});
+
+// 头像上传处理
+document.getElementById('avatarInput').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // 检查文件类型
+    if (!file.type.match('image.*')) {
+        utils.showToast('请选择图片文件', 'error');
+        return;
+    }
+
+    // 检查文件大小
+    if (file.size > 2 * 1024 * 1024) {
+        utils.showToast('图片大小不能超过2MB', 'error');
+        return;
+    }
+
+    // 创建FormData
+    const formData = new FormData();
+    formData.append('avatar', file);
+
+    // 显示上传进度
+    const changeButton = e.target.nextElementSibling;
+    const originalText = changeButton.innerHTML;
+    changeButton.innerHTML = '<i class="bi bi-hourglass-split"></i> 上传中...';
+    changeButton.disabled = true;
+
+    // 发送上传请求
+    fetch('/student/upload_avatar', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // 更新头像显示
+            const avatarImg = document.querySelector('.rounded-circle[src], .rounded-circle:not(.bg-light)');
+            if (avatarImg) {
+                // 如果是图片元素，直接更新src
+                if (avatarImg.tagName === 'IMG') {
+                    avatarImg.src = data.avatar_url + '?t=' + Date.now();
+                } else {
+                    // 如果是占位符div，替换为图片
+                    const newImg = document.createElement('img');
+                    newImg.src = data.avatar_url + '?t=' + Date.now();
+                    newImg.alt = '头像';
+                    newImg.className = 'rounded-circle';
+                    newImg.style.cssText = 'width: 150px; height: 150px; object-fit: cover;';
+                    avatarImg.parentNode.replaceChild(newImg, avatarImg);
+                }
+            }
+            utils.showToast(data.message, 'success');
+        } else {
+            utils.showToast(data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        utils.showToast('上传失败，请稍后重试', 'error');
+    })
+    .finally(() => {
+        // 恢复按钮状态
+        changeButton.innerHTML = originalText;
+        changeButton.disabled = false;
+        // 清空文件输入
+        e.target.value = '';
+    });
+});
+
+// 显示编辑个人资料模态框
+function editProfile() {
+    // 获取当前用户信息
+    fetch('/student/profile/edit', {
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        // 填充表单
+        document.getElementById('editName').value = data.name || '';
+        document.getElementById('editGender').value = data.gender || '';
+        document.getElementById('editMajor').value = data.major || '';
+        document.getElementById('editGrade').value = data.grade || '';
+        document.getElementById('editClass').value = data.class_name || '';
+        document.getElementById('editPhone').value = data.phone || '';
+
+        // 显示模态框
+        const modal = new bootstrap.Modal(document.getElementById('editProfileModal'));
+        modal.show();
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        utils.showToast('获取用户信息失败', 'error');
+    });
+}
+
+// 编辑个人资料表单提交
+document.getElementById('editProfileForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const formData = new FormData(this);
+    const data = Object.fromEntries(formData);
+
+    // 发送更新请求
+    fetch('/student/profile/edit', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: new URLSearchParams(data)
+    })
+    .then(response => {
+        // 检查响应是否成功
+        if (!response.ok) {
+            // 如果响应是重定向（比如到登录页面），则刷新整个页面
+            if (response.redirected) {
+                window.location.href = response.url;
+                return;
+            }
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        // 检查响应的内容类型
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            // 如果不是 JSON，可能是重定向到登录页面
+            console.error('Expected JSON but got:', contentType);
+            window.location.reload(); // 刷新页面以重新加载
+            return;
+        }
+
+        return response.json();
+    })
+    .then(data => {
+        if (data && data.success) {
+            utils.showToast(data.message, 'success');
+
+            // 关闭模态框
+            const modal = bootstrap.Modal.getInstance(document.getElementById('editProfileModal'));
+            modal.hide();
+
+            // 刷新页面以显示更新的信息
+            setTimeout(() => {
+                location.reload();
+            }, 1000);
+        } else if (data) {
+            utils.showToast(data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        if (error.message.includes('401') || error.message.includes('403')) {
+            utils.showToast('登录已过期，请重新登录', 'error');
+            setTimeout(() => {
+                window.location.href = '/student/login';
+            }, 1500);
+        } else {
+            utils.showToast('更新失败，请稍后重试', 'error');
+        }
+    });
+});
+</script>
+
+<style>
+.bg-gradient-primary {
+    background: linear-gradient(135deg, var(--primary-color) 0%, #004494 100%) !important;
+}
+
+.rounded-circle.bg-light {
+    border: 3px solid #e9ecef;
+}
+
+.btn-group .btn {
+    margin-right: 0.5rem;
+}
+
+.btn-group .btn:last-child {
+    margin-right: 0;
+}
+
+.card .badge {
+    margin-right: 0.5rem;
+}
+
+.alert-info {
+    background-color: #e7f3ff;
+    border-color: #b8daff;
+}
+
+.small ul {
+    padding-left: 1.2rem;
+}
+</style>
+{% endblock %}

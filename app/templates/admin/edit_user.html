@@ -1,0 +1,236 @@
+{% extends "common/base.html" %}
+
+{% block title %}编辑学生信息 - 管理员后台{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- 页面标题 -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4><i class="bi bi-person-gear"></i> 编辑学生信息</h4>
+        <a href="{{ url_for('admin.users') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> 返回用户管理
+        </a>
+    </div>
+
+    <!-- 编辑学生表单 -->
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">学生信息 - {{ student.name }} ({{ student.student_id }})</h5>
+                </div>
+                <form method="POST" id="editUserForm">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">学号</label>
+                                <input type="text" class="form-control" value="{{ student.student_id }}" readonly>
+                                <div class="form-text">学号不可修改</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">姓名 *</label>
+                                <input type="text" class="form-control" name="name" value="{{ student.name }}" required
+                                       placeholder="请输入学生姓名">
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">邮箱 *</label>
+                                <input type="email" class="form-control" name="email" value="{{ student.email }}" required
+                                       placeholder="student@example.com">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">手机号</label>
+                                <input type="tel" class="form-control" name="phone" value="{{ student.phone or '' }}"
+                                       placeholder="请输入手机号" pattern="[0-9]{11}" title="请输入11位手机号">
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">专业 *</label>
+                                <select class="form-select" name="major" required>
+                                    <option value="">选择专业</option>
+                                    <option value="计算机科学与技术" {% if student.major == '计算机科学与技术' %}selected{% endif %}>计算机科学与技术</option>
+                                    <option value="软件工程" {% if student.major == '软件工程' %}selected{% endif %}>软件工程</option>
+                                    <option value="电子信息工程" {% if student.major == '电子信息工程' %}selected{% endif %}>电子信息工程</option>
+                                    <option value="通信工程" {% if student.major == '通信工程' %}selected{% endif %}>通信工程</option>
+                                    <option value="自动化" {% if student.major == '自动化' %}selected{% endif %}>自动化</option>
+                                    <option value="机械工程" {% if student.major == '机械工程' %}selected{% endif %}>机械工程</option>
+                                    <option value="土木工程" {% if student.major == '土木工程' %}selected{% endif %}>土木工程</option>
+                                    <option value="工商管理" {% if student.major == '工商管理' %}selected{% endif %}>工商管理</option>
+                                    <option value="会计学" {% if student.major == '会计学' %}selected{% endif %}>会计学</option>
+                                    <option value="英语" {% if student.major == '英语' %}selected{% endif %}>英语</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">年级 *</label>
+                                <select class="form-select" name="grade" required>
+                                    <option value="">选择年级</option>
+                                    <option value="2024级" {% if student.grade == '2024级' %}selected{% endif %}>2024级</option>
+                                    <option value="2023级" {% if student.grade == '2023级' %}selected{% endif %}>2023级</option>
+                                    <option value="2022级" {% if student.grade == '2022级' %}selected{% endif %}>2022级</option>
+                                    <option value="2021级" {% if student.grade == '2021级' %}selected{% endif %}>2021级</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">班级</label>
+                                <input type="text" class="form-control" name="class_name" value="{{ student.class_name or '' }}"
+                                       placeholder="如：1班">
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">账户状态</label>
+                                <select class="form-select" name="status">
+                                    <option value="active" {% if student.status == 'active' %}selected{% endif %}>激活</option>
+                                    <option value="suspended" {% if student.status == 'suspended' %}selected{% endif %}>禁用</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">信用分数</label>
+                                <input type="number" class="form-control" value="{{ student.credit_score }}" readonly>
+                                <div class="form-text">信用分数不可直接修改</div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">新密码</label>
+                                <input type="password" class="form-control" name="password"
+                                       placeholder="留空则不修改密码">
+                                <div class="form-text">留空将保持原密码不变</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">确认新密码</label>
+                                <input type="password" class="form-control" name="confirm_password"
+                                       placeholder="请再次输入新密码">
+                            </div>
+                        </div>
+
+                        <!-- 学生统计信息 -->
+                        <div class="alert alert-light">
+                            <h6><i class="bi bi-bar-chart"></i> 统计信息</h6>
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <strong>总预约次数：</strong>{{ student.total_bookings }}
+                                </div>
+                                <div class="col-md-3">
+                                    <strong>违规次数：</strong>{{ student.violation_count }}
+                                </div>
+                                <div class="col-md-3">
+                                    <strong>注册时间：</strong>{{ student.created_at.strftime('%Y-%m-%d') }}
+                                </div>
+                                <div class="col-md-3">
+                                    <strong>最后登录：</strong>{{ student.last_login.strftime('%Y-%m-%d %H:%M') if student.last_login else '从未登录' }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('admin.users') }}" class="btn btn-outline-secondary">
+                                <i class="bi bi-x"></i> 取消
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check"></i> 保存修改
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    $('#editUserForm').on('submit', function(e) {
+        e.preventDefault();
+
+        // 表单验证
+        const name = $('input[name="name"]').val().trim();
+        const email = $('input[name="email"]').val().trim();
+        const major = $('select[name="major"]').val();
+        const grade = $('select[name="grade"]').val();
+        const password = $('input[name="password"]').val();
+        const confirmPassword = $('input[name="confirm_password"]').val();
+
+        // 必填字段验证
+        if (!name) {
+            alert('请输入姓名');
+            return;
+        }
+        if (!email) {
+            alert('请输入邮箱');
+            return;
+        }
+        if (!major) {
+            alert('请选择专业');
+            return;
+        }
+        if (!grade) {
+            alert('请选择年级');
+            return;
+        }
+
+        // 邮箱格式验证
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            alert('请输入有效的邮箱地址');
+            return;
+        }
+
+        // 手机号格式验证（如果填写了）
+        const phone = $('input[name="phone"]').val().trim();
+        if (phone && !/^[0-9]{11}$/.test(phone)) {
+            alert('手机号必须为11位数字');
+            return;
+        }
+
+        // 密码确认验证
+        if (password && password !== confirmPassword) {
+            alert('两次输入的密码不一致');
+            return;
+        }
+
+        // 密码长度验证
+        if (password && password.length < 6) {
+            alert('密码长度不能少于6位');
+            return;
+        }
+
+        // 提交表单
+        const formData = new FormData(this);
+
+        $.ajax({
+            url: '/admin/users/{{ student.id }}/edit',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                if (response.success) {
+                    alert('学生信息更新成功！');
+                    window.location.href = '/admin/users';
+                } else {
+                    alert('更新失败：' + response.message);
+                }
+            },
+            error: function(xhr) {
+                if (xhr.status === 400) {
+                    const response = xhr.responseJSON;
+                    alert('更新失败：' + (response ? response.message : '请求参数错误'));
+                } else {
+                    alert('更新失败，请重试');
+                }
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,240 @@
+{% extends "common/base.html" %}
+
+{% block title %}学生注册 - 电子科技大学成都学院自习室预约系统{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card shadow">
+                <div class="card-header bg-gradient-primary text-white text-center py-3">
+                    <h4 class="mb-0">
+                        <i class="bi bi-person-plus me-2"></i>学生注册
+                    </h4>
+                    <p class="mb-0 small opacity-75">创建您的自习室预约账户</p>
+                </div>
+                <div class="card-body p-4">
+                    <form method="POST" novalidate onsubmit="return preventFormReset()">
+                        <div class="mb-3">
+                            <label for="student_id" class="form-label">学号 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="student_id" name="student_id"
+                                   value="{{ form.student_id.data or '' }}" required
+                                   placeholder="请输入您的学号">
+                            {% if form.student_id.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.student_id.errors %}{{ error }}{% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="full_name" class="form-label">真实姓名 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="full_name" name="full_name"
+                                   value="{{ form.full_name.data or '' }}" required
+                                   placeholder="请输入您的真实姓名">
+                            {% if form.full_name.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.full_name.errors %}{{ error }}{% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="email" class="form-label">邮箱 <span class="text-danger">*</span></label>
+                            <input type="email" class="form-control" id="email" name="email"
+                                   value="{{ form.email.data or '' }}" required
+                                   placeholder="例：student@cduest.edu.cn">
+                            {% if form.email.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.email.errors %}{{ error }}{% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="phone" class="form-label">手机号</label>
+                            <input type="tel" class="form-control" id="phone" name="phone"
+                                   value="{{ form.phone.data or '' }}"
+                                   placeholder="请输入11位手机号（选填）">
+                            {% if form.phone.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.phone.errors %}{{ error }}{% endfor %}
+                            </div>
+                            {% endif %}
+                            <div class="form-text">用于接收重要通知，请确保号码正确</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="password" class="form-label">密码 <span class="text-danger">*</span></label>
+                            <input type="password" class="form-control" id="password" name="password" required
+                                   placeholder="请输入密码，至少6位">
+                            {% if form.password.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.password.errors %}{{ error }}{% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="password2" class="form-label">确认密码 <span class="text-danger">*</span></label>
+                            <input type="password" class="form-control" id="password2" name="password2" required
+                                   placeholder="请再次输入密码">
+                            {% if form.password2.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.password2.errors %}{{ error }}{% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-person-plus me-2"></i>立即注册
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                <div class="card-footer bg-light text-center">
+                    <p class="mb-0">
+                        已有账户？
+                        <a href="{{ url_for('auth.student_login') }}" class="text-decoration-none">
+                            立即登录
+                        </a>
+                    </p>
+                </div>
+            </div>
+
+            <!-- 注册须知 -->
+            <div class="alert alert-info mt-4">
+                <h6><i class="bi bi-info-circle me-2"></i>注册须知</h6>
+                <ul class="mb-0 small">
+                    <li>请使用真实的学号和姓名进行注册</li>
+                    <li>注册后可完善个人资料（学院、年级、班级等）</li>
+                    <li>初始信用积分为100分，请合理使用预约功能</li>
+                    <li>如有问题请联系管理员：admin@cduest.edu.cn</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// 保存表单数据的函数
+function saveFormData() {
+    const formData = {
+        student_id: document.getElementById('student_id').value,
+        full_name: document.getElementById('full_name').value,
+        email: document.getElementById('email').value,
+        phone: document.getElementById('phone').value
+    };
+    sessionStorage.setItem('registerFormData', JSON.stringify(formData));
+}
+
+// 恢复表单数据的函数
+function restoreFormData() {
+    const savedData = sessionStorage.getItem('registerFormData');
+    if (savedData) {
+        const formData = JSON.parse(savedData);
+        document.getElementById('student_id').value = formData.student_id || '';
+        document.getElementById('full_name').value = formData.full_name || '';
+        document.getElementById('email').value = formData.email || '';
+        document.getElementById('phone').value = formData.phone || '';
+    }
+}
+
+// 防止表单重置
+function preventFormReset() {
+    saveFormData();
+    return true;
+}
+
+// 使用 jQuery 或纯 JavaScript 防止表单重置
+document.addEventListener('DOMContentLoaded', function() {
+    // 页面加载时恢复之前的数据
+    restoreFormData();
+    const form = document.querySelector('form');
+    const passwordInput = document.getElementById('password');
+    const password2Input = document.getElementById('password2');
+
+    // 防止表单在验证失败时重置
+    form.addEventListener('submit', function(e) {
+        // 手动验证密码匹配
+        if (passwordInput.value !== password2Input.value) {
+            e.preventDefault();
+            alert('两次输入的密码不匹配！');
+            return false;
+        }
+
+        // 验证必填字段
+        const studentId = document.getElementById('student_id').value;
+        const fullName = document.getElementById('full_name').value;
+        const email = document.getElementById('email').value;
+
+        if (!studentId || !fullName || !email) {
+            e.preventDefault();
+            alert('请填写所有必填字段！');
+            return false;
+        }
+    });
+
+    // 密码匹配提示（不使用 setCustomValidity）
+    password2Input.addEventListener('input', function() {
+        const password = passwordInput.value;
+        const confirmPassword = this.value;
+
+        if (confirmPassword && password !== confirmPassword) {
+            this.classList.add('is-invalid');
+            // 创建或更新错误消息
+            let errorMsg = this.parentNode.querySelector('.password-error');
+            if (!errorMsg) {
+                errorMsg = document.createElement('div');
+                errorMsg.className = 'invalid-feedback password-error';
+                this.parentNode.appendChild(errorMsg);
+            }
+            errorMsg.textContent = '密码不匹配';
+        } else {
+            this.classList.remove('is-invalid');
+            // 移除错误消息
+            let errorMsg = this.parentNode.querySelector('.password-error');
+            if (errorMsg) {
+                errorMsg.remove();
+            }
+        }
+    });
+});
+
+// 检查是否有成功消息，如果有则清除保存的数据
+window.addEventListener('load', function() {
+    // 检查页面是否有成功消息
+    const successAlert = document.querySelector('.alert-success');
+    if (successAlert) {
+        sessionStorage.removeItem('registerFormData');
+    }
+});
+</script>
+
+<style>
+.bg-gradient-primary {
+    background: linear-gradient(135deg, var(--primary-color) 0%, #004494 100%) !important;
+}
+
+.card {
+    border: none;
+    border-radius: 10px;
+}
+
+.form-control:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.btn-primary:hover {
+    background-color: #0056b3;
+    border-color: #0056b3;
+}
+</style>
+{% endblock %}

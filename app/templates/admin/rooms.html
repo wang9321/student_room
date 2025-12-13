@@ -1,0 +1,348 @@
+{% extends "common/base.html" %}
+
+{% block title %}自习室管理 - 管理员后台{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- 页面标题 -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4><i class="bi bi-building"></i> 自习室管理</h4>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addRoomModal">
+            <i class="bi bi-plus"></i> 新增自习室
+        </button>
+    </div>
+
+    <!-- 自习室列表 -->
+    <div class="row">
+        {% for room in rooms %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="card-title mb-0">{{ room.name }}</h6>
+                    <span class="badge bg-{{ 'success' if room.status == 'open' else 'secondary' }}">
+                        {{ '开放' if room.status == 'open' else '关闭' }}
+                    </span>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted small">
+                        <strong>编号:</strong> {{ room.room_number }}<br>
+                        <strong>楼宇:</strong> {{ room.building }} {{ room.floor }}<br>
+                        <strong>位置:</strong> {{ room.location }}<br>
+                        <strong>容量:</strong> {{ room.capacity }} 人<br>
+                        <strong>开放时间:</strong> {{ room.open_time }} - {{ room.close_time }}
+                    </p>
+                    {% if room.description %}
+                    <p class="small">{{ room.description }}</p>
+                    {% endif %}
+                </div>
+                <div class="card-footer">
+                    <div class="btn-group w-100" role="group">
+                        <button class="btn btn-sm btn-outline-primary edit-room-btn"
+                                data-room-id="{{ room.id }}"
+                                data-room-number="{{ room.room_number }}"
+                                data-room-name="{{ room.name }}"
+                                data-building="{{ room.building }}"
+                                data-floor="{{ room.floor }}"
+                                data-location="{{ room.location }}"
+                                data-capacity="{{ room.capacity }}"
+                                data-open-time="{{ room.open_time }}"
+                                data-close-time="{{ room.close_time }}"
+                                data-description="{{ room.description or '' }}"
+                                data-is-active="{{ room.status == 'open' }}">
+                            <i class="bi bi-pencil"></i> 编辑
+                        </button>
+                        <button class="btn btn-sm btn-outline-info manage-seats-btn"
+                                data-room-id="{{ room.id }}"
+                                data-room-name="{{ room.name }}">
+                            <i class="bi bi-grid-3x3"></i> 座位管理
+                        </button>
+                        {% if room.status == 'open' %}
+                        <button class="btn btn-sm btn-outline-warning toggle-room-btn"
+                                data-room-id="{{ room.id }}"
+                                data-action="close">
+                            <i class="bi bi-pause"></i> 关闭
+                        </button>
+                        {% else %}
+                        <button class="btn btn-sm btn-outline-success toggle-room-btn"
+                                data-room-id="{{ room.id }}"
+                                data-action="open">
+                            <i class="bi bi-play"></i> 开放
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% if not rooms %}
+    <div class="text-center py-5">
+        <i class="bi bi-building display-1 text-muted"></i>
+        <h5 class="text-muted mt-3">暂无自习室</h5>
+        <p class="text-muted">点击上方"新增自习室"按钮添加第一个自习室</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- 新增自习室模态框 -->
+<div class="modal fade" id="addRoomModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">新增自习室</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="addRoomForm">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">自习室编号 *</label>
+                            <input type="text" class="form-control" name="room_number" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">自习室名称 *</label>
+                            <input type="text" class="form-control" name="name" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">楼宇 *</label>
+                            <select class="form-select" name="building" required>
+                                <option value="">选择楼宇</option>
+                                <option value="图书馆">图书馆</option>
+                                <option value="教学楼">教学楼</option>
+                                <option value="实验楼">实验楼</option>
+                                <option value="综合楼">综合楼</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">楼层 *</label>
+                            <input type="text" class="form-control" name="floor" required placeholder="如：1楼">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">位置</label>
+                        <input type="text" class="form-control" name="location" placeholder="如：东侧201室">
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">容量（人数）*</label>
+                            <input type="number" class="form-control" name="capacity" min="1" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">状态</label>
+                            <select class="form-select" name="is_active">
+                                <option value="1" selected>开放</option>
+                                <option value="0">关闭</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">开放时间 *</label>
+                            <input type="time" class="form-control" name="open_time" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">关闭时间 *</label>
+                            <input type="time" class="form-control" name="close_time" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">描述</label>
+                        <textarea class="form-control" name="description" rows="3" placeholder="自习室设施说明等"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 编辑自习室模态框 -->
+<div class="modal fade" id="editRoomModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">编辑自习室</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editRoomForm">
+                <input type="hidden" name="room_id">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">自习室编号 *</label>
+                            <input type="text" class="form-control" name="room_number" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">自习室名称 *</label>
+                            <input type="text" class="form-control" name="name" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">楼宇 *</label>
+                            <select class="form-select" name="building" required>
+                                <option value="">选择楼宇</option>
+                                <option value="图书馆">图书馆</option>
+                                <option value="教学楼">教学楼</option>
+                                <option value="实验楼">实验楼</option>
+                                <option value="综合楼">综合楼</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">楼层 *</label>
+                            <input type="text" class="form-control" name="floor" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">位置</label>
+                        <input type="text" class="form-control" name="location">
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">容量（人数）*</label>
+                            <input type="number" class="form-control" name="capacity" min="1" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">状态</label>
+                            <select class="form-select" name="is_active">
+                                <option value="1">开放</option>
+                                <option value="0">关闭</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">开放时间 *</label>
+                            <input type="time" class="form-control" name="open_time" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">关闭时间 *</label>
+                            <input type="time" class="form-control" name="close_time" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">描述</label>
+                        <textarea class="form-control" name="description" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary">更新</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // 新增自习室
+    $('#addRoomForm').on('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+
+        $.ajax({
+            url: '/admin/api/add_room',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                if (response.success) {
+                    alert('自习室添加成功！');
+                    location.reload();
+                } else {
+                    alert('添加失败：' + response.message);
+                }
+            },
+            error: function() {
+                alert('添加失败，请重试');
+            }
+        });
+    });
+
+    // 编辑自习室
+    $('.edit-room-btn').on('click', function() {
+        const btn = $(this);
+        $('#editRoomForm input[name="room_id"]').val(btn.data('room-id'));
+        $('#editRoomForm input[name="room_number"]').val(btn.data('room-number'));
+        $('#editRoomForm input[name="name"]').val(btn.data('room-name'));
+        $('#editRoomForm select[name="building"]').val(btn.data('building'));
+        $('#editRoomForm input[name="floor"]').val(btn.data('floor'));
+        $('#editRoomForm input[name="location"]').val(btn.data('location'));
+        $('#editRoomForm input[name="capacity"]').val(btn.data('capacity'));
+        $('#editRoomForm select[name="is_active"]').val(btn.data('is-active'));
+        $('#editRoomForm input[name="open_time"]').val(btn.data('open-time'));
+        $('#editRoomForm input[name="close_time"]').val(btn.data('close-time'));
+        $('#editRoomForm textarea[name="description"]').val(btn.data('description'));
+
+        $('#editRoomModal').modal('show');
+    });
+
+    $('#editRoomForm').on('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+
+        $.ajax({
+            url: '/admin/api/update_room',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                if (response.success) {
+                    alert('自习室更新成功！');
+                    location.reload();
+                } else {
+                    alert('更新失败：' + response.message);
+                }
+            },
+            error: function() {
+                alert('更新失败，请重试');
+            }
+        });
+    });
+
+    // 切换自习室状态
+    $('.toggle-room-btn').on('click', function() {
+        const roomId = $(this).data('room-id');
+        const action = $(this).data('action');
+        const actionText = action === 'open' ? '开放' : '关闭';
+
+        if (confirm(`确定要${actionText}这个自习室吗？`)) {
+            $.ajax({
+                url: '/admin/api/toggle_room',
+                type: 'POST',
+                data: {room_id: roomId, action: action},
+                success: function(response) {
+                    if (response.success) {
+                        alert(`自习室已${actionText}`);
+                        location.reload();
+                    } else {
+                        alert('操作失败：' + response.message);
+                    }
+                },
+                error: function() {
+                    alert('操作失败，请重试');
+                }
+            });
+        }
+    });
+
+    // 座位管理
+    $('.manage-seats-btn').on('click', function() {
+        const roomId = $(this).data('room-id');
+        // 跳转到座位管理页面
+        window.location.href = `/admin/rooms/${roomId}/seats`;
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,534 @@
+{% extends "common/base.html" %}
+
+{% block title %}自习室浏览 - 电子科技大学成都学院自习室预约系统{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- 页面标题 -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-gradient-primary text-white">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-door-open me-3" style="font-size: 2rem;"></i>
+                        <div>
+                            <h2 class="mb-1">自习室浏览</h2>
+                            <p class="mb-0 opacity-75">查看所有可用的自习室和实时座位信息</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="bi bi-search"></i>
+                                </span>
+                                <input type="text" class="form-control" id="roomSearch" placeholder="搜索自习室名称或地点...">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select" id="roomFilter">
+                                <option value="">所有楼层</option>
+                                <option value="1">1楼</option>
+                                <option value="2">2楼</option>
+                                <option value="3">3楼</option>
+                                <option value="4">4楼</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select" id="statusFilter">
+                                <option value="">所有状态</option>
+                                <option value="open">开放中</option>
+                                <option value="closed">已关闭</option>
+                                <option value="maintenance">维护中</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 统计信息 -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-success text-white shadow">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0">{{ stats.total_rooms }}</h4>
+                            <small>开放中</small>
+                        </div>
+                        <i class="bi bi-door-open" style="font-size: 2rem; opacity: 0.8;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white shadow">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0">{{ stats.total_seats }}</h4>
+                            <small>总座位数</small>
+                        </div>
+                        <i class="bi bi-grid" style="font-size: 2rem; opacity: 0.8;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white shadow">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0">{{ stats.available_seats }}</h4>
+                            <small>可用座位</small>
+                        </div>
+                        <i class="bi bi-check-circle" style="font-size: 2rem; opacity: 0.8;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-danger text-white shadow">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0">{{ stats.occupied_seats }}</h4>
+                            <small>已占用</small>
+                        </div>
+                        <i class="bi bi-person-fill" style="font-size: 2rem; opacity: 0.8;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 自习室列表 -->
+    <div class="row" id="roomsList">
+        {% for room_info in rooms_info %}
+        <div class="col-lg-4 col-md-6 mb-4 room-item"
+             data-floor="{{ room_info.room.floor|default('') }}"
+             data-status="{{ room_info.room.status }}"
+             data-name="{{ room_info.room.name|lower }}">
+            <div class="card h-100 shadow-sm border-0 room-card" data-room-id="{{ room_info.room.id }}">
+                <div class="card-header bg-gradient-primary text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">{{ room_info.room.name }}</h5>
+                        {% if room_info.room.status == 'open' %}
+                        <span class="badge bg-light text-success">开放中</span>
+                        {% elif room_info.room.status == 'closed' %}
+                        <span class="badge bg-secondary">已关闭</span>
+                        {% else %}
+                        <span class="badge bg-warning">维护中</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <small class="text-muted">地点</small>
+                            <p class="mb-1 fw-bold">{{ room_info.room.location }}</p>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">楼层</small>
+                            <p class="mb-1 fw-bold">{{ room_info.room.floor|default('未设置') }}楼</p>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <small class="text-muted">座位总数</small>
+                            <p class="mb-1 fw-bold">{{ room_info.total_seats }}</p>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">可用座位</small>
+                            <p class="mb-1 fw-bold text-success">{{ room_info.available_seats }}</p>
+                        </div>
+                    </div>
+
+                    <!-- 占用率进度条 -->
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <small class="text-muted">占用率</small>
+                            <small class="text-muted">{{ "%.1f"|format(room_info.occupancy_rate) }}%</small>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            {% if room_info.occupancy_rate < 30 %}
+                            <div class="progress-bar bg-success" style="width: {{ room_info.occupancy_rate }}%"></div>
+                            {% elif room_info.occupancy_rate < 70 %}
+                            <div class="progress-bar bg-warning" style="width: {{ room_info.occupancy_rate }}%"></div>
+                            {% else %}
+                            <div class="progress-bar bg-danger" style="width: {{ room_info.occupancy_rate }}%"></div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- 设施标签 -->
+                    <div class="mb-3">
+                        {% if room_info.room.has_power %}
+                        <span class="badge bg-light text-dark me-1">
+                            <i class="bi bi-plug"></i> 电源
+                        </span>
+                        {% endif %}
+                        {% if room_info.room.has_wifi %}
+                        <span class="badge bg-light text-dark me-1">
+                            <i class="bi bi-wifi"></i> WiFi
+                        </span>
+                        {% endif %}
+                        {% if room_info.room.has_air_conditioning %}
+                        <span class="badge bg-light text-dark me-1">
+                            <i class="bi bi-snow"></i> 空调
+                        </span>
+                        {% endif %}
+                        {% if room_info.room.is_quiet %}
+                        <span class="badge bg-info text-white me-1">
+                            <i class="bi bi-volume-mute"></i> 安静区
+                        </span>
+                        {% endif %}
+                    </div>
+
+                    {% if room_info.room.description %}
+                    <p class="text-muted small mb-0">{{ room_info.room.description[:100] }}...</p>
+                    {% endif %}
+                </div>
+                <div class="card-footer bg-transparent">
+                    <div class="d-grid">
+                        {% if room_info.room.status == 'open' and room_info.available_seats > 0 %}
+                        <button class="btn btn-primary view-seats-btn"
+                                onclick="viewRoomSeats({{ room_info.room.id }})">
+                            <i class="bi bi-grid-3x3-gap"></i> 查看座位详情
+                        </button>
+                        {% elif room_info.room.status != 'open' %}
+                        <button class="btn btn-secondary" disabled>
+                            <i class="bi bi-x-circle"></i> 暂不开放
+                        </button>
+                        {% else %}
+                        <button class="btn btn-outline-warning" disabled>
+                            <i class="bi bi-exclamation-triangle"></i> 已满座
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% if not rooms_info %}
+    <div class="row">
+        <div class="col-12">
+            <div class="text-center py-5">
+                <i class="bi bi-door-closed text-muted" style="font-size: 4rem;"></i>
+                <h4 class="text-muted mt-3">暂无开放的自习室</h4>
+                <p class="text-muted">请稍后再试或联系管理员了解最新情况</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- 座位详情模态框 -->
+<div class="modal fade" id="seatsModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-grid-3x3-gap"></i>
+                    <span id="modalRoomName">自习室座位</span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label for="seatDate" class="form-label">选择日期</label>
+                        <input type="date" class="form-control" id="seatDate" required>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="startTime" class="form-label">开始时间</label>
+                        <input type="time" class="form-control" id="startTime" required>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="endTime" class="form-label">结束时间</label>
+                        <input type="time" class="form-control" id="endTime" required>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button class="btn btn-primary w-100" onclick="checkSeatAvailability()">
+                            查询可用性
+                        </button>
+                    </div>
+                </div>
+
+                <div id="seatsContainer" class="text-center py-4">
+                    <i class="bi bi-hourglass-split text-muted" style="font-size: 2rem;"></i>
+                    <p class="text-muted">请选择日期和时间后查询座位可用性</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                {% if current_user.can_book() %}
+                <button type="button" class="btn btn-primary" id="bookSelectedSeatBtn" style="display: none;" onclick="bookSelectedSeat()">
+                    预约选中的座位
+                </button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentRoomId = null;
+let selectedSeatId = null;
+
+// 初始化日期为今天
+document.addEventListener('DOMContentLoaded', function() {
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('seatDate').value = today;
+    document.getElementById('seatDate').min = today;
+
+    // 设置最大日期为7天后
+    const maxDate = new Date();
+    maxDate.setDate(maxDate.getDate() + 7);
+    document.getElementById('seatDate').max = maxDate.toISOString().split('T')[0];
+});
+
+// 查看房间座位
+function viewRoomSeats(roomId) {
+    currentRoomId = roomId;
+    const roomCard = document.querySelector(`[data-room-id="${roomId}"]`);
+    const roomName = roomCard.querySelector('.card-title').textContent;
+
+    document.getElementById('modalRoomName').textContent = roomName + ' - 座位详情';
+
+    const modal = new bootstrap.Modal(document.getElementById('seatsModal'));
+    modal.show();
+}
+
+// 检查座位可用性
+function checkSeatAvailability() {
+    const date = document.getElementById('seatDate').value;
+    const startTime = document.getElementById('startTime').value;
+    const endTime = document.getElementById('endTime').value;
+
+    if (!date || !startTime || !endTime) {
+        utils.showToast('请填写完整信息', 'error');
+        return;
+    }
+
+    if (startTime >= endTime) {
+        utils.showToast('结束时间必须晚于开始时间', 'error');
+        return;
+    }
+
+    // 显示加载状态
+    const container = document.getElementById('seatsContainer');
+    container.innerHTML = `
+        <div class="text-center py-4">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">加载中...</span>
+            </div>
+            <p class="text-muted mt-2">正在查询座位可用性...</p>
+        </div>
+    `;
+
+    // 发送AJAX请求
+    fetch(`/student/room/${currentRoomId}/seats?date=${date}&start_time=${startTime}&end_time=${endTime}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displaySeats(data.seats);
+            } else {
+                container.innerHTML = `<p class="text-danger">查询失败：${data.message}</p>`;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            container.innerHTML = `<p class="text-danger">网络错误，请稍后重试</p>`;
+        });
+}
+
+// 显示座位
+function displaySeats(seats) {
+    const container = document.getElementById('seatsContainer');
+    let html = '<div class="row">';
+
+    seats.forEach(seat => {
+        const statusClass = seat.is_available ? 'available' : 'unavailable';
+        const statusText = seat.is_available ? '可用' : '已被预约';
+        const statusIcon = seat.is_available ? 'check-circle' : 'x-circle';
+
+        html += `
+            <div class="col-md-3 col-sm-4 col-6 mb-3">
+                <div class="card seat-card ${statusClass}"
+                     data-seat-id="${seat.id}"
+                     onclick="selectSeat(${seat.id}, ${seat.is_available})">
+                    <div class="card-body text-center">
+                        <i class="bi bi-${statusIcon}" style="font-size: 2rem; color: ${seat.is_available ? 'var(--success-color)' : 'var(--danger-color)'};"></i>
+                        <h6 class="mt-2 mb-1">${seat.seat_number}</h6>
+                        <small class="text-muted">${seat.type}</small>
+                        <div class="mt-2">
+                            <small class="badge ${seat.is_available ? 'bg-success' : 'bg-danger'}">
+                                ${statusText}
+                            </small>
+                        </div>
+                        <div class="mt-1">
+                            ${seat.power_socket ? '<i class="bi bi-plug text-primary" title="电源"></i>' : ''}
+                            ${seat.window_seat ? '<i class="bi bi-sun text-warning" title="窗边"></i>' : ''}
+                            ${seat.computer_available ? '<i class="bi bi-pc-display text-info" title="电脑"></i>' : ''}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+// 选择座位
+function selectSeat(seatId, isAvailable) {
+    if (!isAvailable) {
+        utils.showToast('该座位不可用', 'warning');
+        return;
+    }
+
+    // 移除之前的选择
+    document.querySelectorAll('.seat-card').forEach(card => {
+        card.classList.remove('selected');
+        card.style.border = '';
+    });
+
+    // 标记新选择
+    const seatCard = document.querySelector(`[data-seat-id="${seatId}"]`);
+    seatCard.classList.add('selected');
+    seatCard.style.border = '3px solid var(--primary-color)';
+
+    selectedSeatId = seatId;
+    document.getElementById('bookSelectedSeatBtn').style.display = 'block';
+}
+
+// 预约选中的座位
+function bookSelectedSeat() {
+    if (!selectedSeatId) {
+        utils.showToast('请先选择座位', 'warning');
+        return;
+    }
+
+    const date = document.getElementById('seatDate').value;
+    const startTime = document.getElementById('startTime').value;
+    const endTime = document.getElementById('endTime').value;
+
+    const bookingData = {
+        seat_id: selectedSeatId,
+        booking_date: date,
+        start_time: startTime,
+        end_time: endTime,
+        purpose: ''
+    };
+
+    fetch('/student/book_seat', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(bookingData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            utils.showToast('预约成功！', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('seatsModal')).hide();
+            setTimeout(() => {
+                window.location.href = '/student/my_bookings';
+            }, 1500);
+        } else {
+            utils.showToast(data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        utils.showToast('预约失败，请稍后重试', 'error');
+    });
+}
+
+// 搜索功能
+document.getElementById('roomSearch').addEventListener('input', filterRooms);
+document.getElementById('roomFilter').addEventListener('change', filterRooms);
+document.getElementById('statusFilter').addEventListener('change', filterRooms);
+
+function filterRooms() {
+    const searchTerm = document.getElementById('roomSearch').value.toLowerCase();
+    const floorFilter = document.getElementById('roomFilter').value;
+    const statusFilter = document.getElementById('statusFilter').value;
+
+    document.querySelectorAll('.room-item').forEach(item => {
+        const name = item.dataset.name;
+        const floor = item.dataset.floor;
+        const status = item.dataset.status;
+
+        let show = true;
+
+        if (searchTerm && !name.includes(searchTerm)) {
+            show = false;
+        }
+
+        if (floorFilter && floor !== floorFilter) {
+            show = false;
+        }
+
+        if (statusFilter && status !== statusFilter) {
+            show = false;
+        }
+
+        item.style.display = show ? 'block' : 'none';
+    });
+}
+</script>
+
+<style>
+.room-card {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.room-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
+}
+
+.seat-card {
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+.seat-card.available {
+    background-color: #f8fff9;
+    border: 1px solid #dee2e6;
+}
+
+.seat-card.available:hover {
+    background-color: #e8f5e8;
+    transform: translateY(-2px);
+}
+
+.seat-card.unavailable {
+    background-color: #f8f9fa;
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.seat-card.selected {
+    background-color: #e7f3ff;
+    box-shadow: 0 4px 15px rgba(0,123,255,0.3);
+}
+
+.bg-gradient-primary {
+    background: linear-gradient(135deg, var(--primary-color) 0%, #004494 100%) !important;
+}
+</style>
+{% endblock %}

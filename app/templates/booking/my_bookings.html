@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+
+{% block title %}我的预约 - 校园自习室预约系统{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2>
+            <i class="bi bi-calendar-check"></i> 我的预约
+            <a href="{{ url_for('booking.select_room') }}" class="btn btn-primary float-end">
+                <i class="bi bi-calendar-plus"></i> 新建预约
+            </a>
+        </h2>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        {% if bookings %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>自习室</th>
+                        <th>座位</th>
+                        <th>预约时间</th>
+                        <th>使用时间</th>
+                        <th>状态</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for booking in bookings %}
+                    <tr>
+                        <td>
+                            <strong>{{ booking.seat.study_room.name }}</strong><br>
+                            <small class="text-muted">{{ booking.seat.study_room.location }}</small>
+                        </td>
+                        <td>
+                            {{ booking.seat.seat_number }}
+                            {% if booking.seat.seat_type == 'window' %}
+                                <span class="badge bg-info ms-1">靠窗</span>
+                            {% elif booking.seat.seat_type == 'power' %}
+                                <span class="badge bg-warning ms-1">电源</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {{ booking.booking_time.strftime('%Y-%m-%d %H:%M') }}
+                        </td>
+                        <td>
+                            {{ booking.start_time.strftime('%Y-%m-%d %H:%M') }}<br>
+                            {{ booking.end_time.strftime('%Y-%m-%d %H:%M') }}
+                        </td>
+                        <td>
+                            {% if booking.status == 'pending' %}
+                                <span class="badge bg-warning">待确认</span>
+                            {% elif booking.status == 'confirmed' %}
+                                <span class="badge bg-info">已确认</span>
+                            {% elif booking.status == 'checked_in' %}
+                                <span class="badge bg-success">已签到</span>
+                            {% elif booking.status == 'completed' %}
+                                <span class="badge bg-secondary">已完成</span>
+                            {% elif booking.status == 'cancelled' %}
+                                <span class="badge bg-danger">已取消</span>
+                            {% elif booking.status == 'no_show' %}
+                                <span class="badge bg-dark">未签到</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                {% if booking.status == 'confirmed' %}
+                                    <a href="{{ url_for('booking.check_in', booking_id=booking.id) }}" class="btn btn-sm btn-success">
+                                        <i class="bi bi-box-arrow-in-right"></i> 签到
+                                    </a>
+                                {% elif booking.status == 'checked_in' %}
+                                    <a href="{{ url_for('booking.check_out', booking_id=booking.id) }}" class="btn btn-sm btn-primary">
+                                        <i class="bi bi-box-arrow-left"></i> 签退
+                                    </a>
+                                {% endif %}
+
+                                {% if booking.status in ['pending', 'confirmed'] %}
+                                    <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#cancelModal{{ booking.id }}">
+                                        <i class="bi bi-x-circle"></i> 取消
+                                    </button>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="alert alert-info text-center">
+            <i class="bi bi-info-circle"></i>
+            <h5>暂无预约记录</h5>
+            <p class="mb-3">您还没有任何预约记录，快来预约座位吧！</p>
+            <a href="{{ url_for('booking.select_room') }}" class="btn btn-primary">
+                <i class="bi bi-calendar-plus"></i> 立即预约
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- 取消预约模态框 -->
+{% for booking in bookings %}
+{% if booking.status in ['pending', 'confirmed'] %}
+<div class="modal fade" id="cancelModal{{ booking.id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">取消预约</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>确定要取消以下预约吗？</p>
+                <div class="alert alert-light">
+                    <strong>自习室：</strong>{{ booking.seat.study_room.name }}<br>
+                    <strong>座位：</strong>{{ booking.seat.seat_number }}<br>
+                    <strong>时间：</strong>{{ booking.start_time.strftime('%Y-%m-%d %H:%M') }} - {{ booking.end_time.strftime('%Y-%m-%d %H:%M') }}
+                </div>
+                <div class="mb-3">
+                    <label for="cancelReason{{ booking.id }}" class="form-label">取消原因（选填）</label>
+                    <textarea class="form-control" id="cancelReason{{ booking.id }}" name="reason" rows="3"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消操作</button>
+                <form method="POST" action="{{ url_for('booking.cancel_booking', booking_id=booking.id) }}" style="display: inline;">
+                    <input type="hidden" name="reason" id="hiddenReason{{ booking.id }}">
+                    <button type="submit" class="btn btn-danger">确认取消</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const modal{{ booking.id }} = document.getElementById('cancelModal{{ booking.id }}');
+    const reasonInput{{ booking.id }} = document.getElementById('cancelReason{{ booking.id }}');
+    const hiddenInput{{ booking.id }} = document.getElementById('hiddenReason{{ booking.id }}');
+
+    modal{{ booking.id }}.addEventListener('show.bs.modal', function() {
+        hiddenInput{{ booking.id }}.value = reasonInput{{ booking.id }}.value;
+    });
+
+    reasonInput{{ booking.id }}.addEventListener('input', function() {
+        hiddenInput{{ booking.id }}.value = this.value;
+    });
+});
+</script>
+{% endif %}
+{% endfor %}
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">预约说明</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="bi bi-info-circle text-info"></i> 状态说明</h6>
+                        <ul class="list-unstyled small">
+                            <li><span class="badge bg-warning">待确认</span> - 预约已提交，等待确认</li>
+                            <li><span class="badge bg-info">已确认</span> - 预约已确认，可按时签到</li>
+                            <li><span class="badge bg-success">已签到</span> - 已签到，正在使用</li>
+                            <li><span class="badge bg-secondary">已完成</span> - 已签退，预约完成</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="bi bi-lightbulb text-warning"></i> 温馨提示</h6>
+                        <ul class="list-unstyled small">
+                            <li>请在预约开始时间前15分钟内签到</li>
+                            <li>超时未签到将自动取消预约</li>
+                            <li>使用结束后请及时签退座位</li>
+                            <li>可提前取消预约，方便其他同学</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}使用帮助 - 校园自习室预约系统{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1><i class="bi bi-question-circle"></i> 使用帮助</h1>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-8">
+        <div class="accordion" id="helpAccordion">
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne">
+                        如何注册账号？
+                    </button>
+                </h2>
+                <div id="collapseOne" class="accordion-collapse collapse show" data-bs-parent="#helpAccordion">
+                    <div class="accordion-body">
+                        <ol>
+                            <li>点击页面右上角的"注册"按钮</li>
+                            <li>填写用户名、学号、真实姓名、邮箱等信息</li>
+                            <li>设置登录密码（至少6位）</li>
+                            <li>点击"注册"按钮完成注册</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo">
+                        如何预约座位？
+                    </button>
+                </h2>
+                <div id="collapseTwo" class="accordion-collapse collapse" data-bs-parent="#helpAccordion">
+                    <div class="accordion-body">
+                        <ol>
+                            <li>登录系统后，点击"立即预约"按钮</li>
+                            <li>选择要使用的自习室</li>
+                            <li>在座位平面图中选择可用座位</li>
+                            <li>设置使用时间段（最长4小时）</li>
+                            <li>填写预约目的（可选）</li>
+                            <li>确认预约信息并提交</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree">
+                        什么是签到和签退？
+                    </button>
+                </h2>
+                <div id="collapseThree" class="accordion-collapse collapse" data-bs-parent="#helpAccordion">
+                    <div class="accordion-body">
+                        <p><strong>签到：</strong>预约成功后，需要在预约开始时间后15分钟内进行签到，否则预约会自动取消。</p>
+                        <p><strong>签退：</strong>使用完座位后，需要签退释放座位，方便其他同学使用。</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFour">
+                        预约规则是什么？
+                    </button>
+                </h2>
+                <div id="collapseFour" class="accordion-collapse collapse" data-bs-parent="#helpAccordion">
+                    <div class="accordion-body">
+                        <ul>
+                            <li>每个用户同时只能有一个有效预约</li>
+                            <li>最长预约时间为4小时</li>
+                            <li>预约后需要在开始时间后15分钟内签到</li>
+                            <li>可以提前取消预约</li>
+                            <li>最多提前7天预约</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5>快速链接</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    {% if current_user.is_authenticated %}
+                    <a href="{{ url_for('booking.select_room') }}" class="btn btn-primary">立即预约</a>
+                    <a href="{{ url_for('booking.my_bookings') }}" class="btn btn-outline-primary">我的预约</a>
+                    {% else %}
+                    <a href="{{ url_for('auth.register') }}" class="btn btn-success">注册账号</a>
+                    <a href="{{ url_for('auth.login') }}" class="btn btn-outline-success">登录</a>
+                    {% endif %}
+                    <a href="{{ url_for('main.index') }}" class="btn btn-secondary">返回首页</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5>联系支持</h5>
+            </div>
+            <div class="card-body">
+                <p>如果您遇到问题，请联系：</p>
+                <ul class="list-unstyled">
+                    <li><i class="bi bi-envelope"></i> support@study-room.com</li>
+                    <li><i class="bi bi-telephone"></i> 028-88888888</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

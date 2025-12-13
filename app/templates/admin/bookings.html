@@ -1,0 +1,386 @@
+{% extends "common/base.html" %}
+
+{% block title %}预约管理 - 管理员后台{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- 页面标题 -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4><i class="bi bi-calendar-check"></i> 预约管理</h4>
+        <div>
+            <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#exportModal">
+                <i class="bi bi-download"></i> 导出数据
+            </button>
+        </div>
+    </div>
+
+    <!-- 筛选器 -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">搜索</label>
+                    <input type="text" class="form-control" name="search" placeholder="学号、姓名、自习室" value="{{ search }}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">状态</label>
+                    <select class="form-select" name="status">
+                        <option value="">全部状态</option>
+                        <option value="confirmed" {% if status == 'confirmed' %}selected{% endif %}>已确认</option>
+                        <option value="active" {% if status == 'active' %}selected{% endif %}>使用中</option>
+                        <option value="completed" {% if status == 'completed' %}selected{% endif %}>已完成</option>
+                        <option value="cancelled" {% if status == 'cancelled' %}selected{% endif %}>已取消</option>
+                        <option value="no_show" {% if status == 'no_show' %}selected{% endif %}>未签到</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">日期</label>
+                    <input type="date" class="form-control" name="date" value="{{ date }}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">&nbsp;</label>
+                    <div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-search"></i> 搜索
+                        </button>
+                        <a href="{{ url_for('admin.bookings') }}" class="btn btn-outline-secondary">重置</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 预约列表 -->
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead class="table-light">
+                <tr>
+                    <th>预约ID</th>
+                    <th>学生信息</th>
+                    <th>自习室</th>
+                    <th>座位号</th>
+                    <th>预约日期</th>
+                    <th>时间段</th>
+                    <th>状态</th>
+                    <th>创建时间</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for booking in bookings %}
+                <tr>
+                    <td>{{ booking.id }}</td>
+                    <td>
+                        <strong>{{ booking.student.name }}</strong><br>
+                        <small class="text-muted">{{ booking.student.student_id }}</small>
+                    </td>
+                    <td>{{ booking.study_room.name }}</td>
+                    <td>{{ booking.seat.seat_number }}</td>
+                    <td>{{ booking.booking_date.strftime('%Y-%m-%d') }}</td>
+                    <td>
+                        {{ booking.start_time.strftime('%H:%M') }} - {{ booking.end_time.strftime('%H:%M') }}
+                    </td>
+                    <td>
+                        <span class="badge bg-{{
+                            'info' if booking.status == 'confirmed'
+                            else 'success' if booking.status == 'active'
+                            else 'primary' if booking.status == 'completed'
+                            else 'danger' if booking.status == 'cancelled'
+                            else 'warning' if booking.status == 'no_show'
+                            else 'secondary'
+                        }}">
+                            {{ {
+                                'confirmed': '已确认',
+                                'active': '使用中',
+                                'completed': '已完成',
+                                'cancelled': '已取消',
+                                'no_show': '未签到'
+                            }.get(booking.status, booking.status) }}
+                        </span>
+                    </td>
+                    <td>{{ booking.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                    <td>
+                        <div class="btn-group btn-group-sm">
+                            {% if booking.status == 'confirmed' %}
+                            <button class="btn btn-sm btn-outline-info checkin-booking-btn"
+                                    data-booking-id="{{ booking.id }}">
+                                <i class="bi bi-check-square"></i> 签到
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger cancel-booking-btn"
+                                    data-booking-id="{{ booking.id }}">
+                                <i class="bi bi-x"></i> 取消
+                            </button>
+                            {% elif booking.status == 'active' and booking.check_in_time %}
+                            <button class="btn btn-sm btn-outline-primary checkout-booking-btn"
+                                    data-booking-id="{{ booking.id }}">
+                                <i class="bi bi-box-arrow-right"></i> 签退
+                            </button>
+                            {% elif booking.status not in ['completed', 'cancelled', 'no_show'] %}
+                            <button class="btn btn-sm btn-outline-danger cancel-booking-btn"
+                                    data-booking-id="{{ booking.id }}">
+                                <i class="bi bi-x"></i> 取消
+                            </button>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if not bookings %}
+    <div class="text-center py-5">
+        <i class="bi bi-calendar-x display-1 text-muted"></i>
+        <h5 class="text-muted mt-3">暂无预约记录</h5>
+        <p class="text-muted">当前没有符合条件的预约记录</p>
+    </div>
+    {% endif %}
+
+    <!-- 分页 -->
+    {% if pagination.pages > 1 %}
+    <nav>
+        <ul class="pagination justify-content-center">
+            {% if pagination.has_prev %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('admin.bookings', page=pagination.prev_num, search=search, status=status, date=date) }}">上一页</a>
+            </li>
+            {% endif %}
+
+            {% for page_num in pagination.iter_pages() %}
+                {% if page_num %}
+                    {% if page_num != pagination.page %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('admin.bookings', page=page_num, search=search, status=status, date=date) }}">{{ page_num }}</a>
+                    </li>
+                    {% else %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ page_num }}</span>
+                    </li>
+                    {% endif %}
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">…</span>
+                </li>
+                {% endif %}
+            {% endfor %}
+
+            {% if pagination.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('admin.bookings', page=pagination.next_num, search=search, status=status, date=date) }}">下一页</a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+
+<!-- 导出数据模态框 -->
+<div class="modal fade" id="exportModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">导出预约数据</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted">选择要导出的数据范围：</p>
+                <div class="mb-3">
+                    <label class="form-label">开始日期</label>
+                    <input type="date" class="form-control" id="exportStartDate">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">结束日期</label>
+                    <input type="date" class="form-control" id="exportEndDate">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">数据类型</label>
+                    <select class="form-select" id="exportType">
+                        <option value="bookings">预约数据</option>
+                        <option value="users">用户数据</option>
+                        <option value="rooms">自习室数据</option>
+                        <option value="announcements">公告数据</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="exportBtn">
+                    <i class="bi bi-download"></i> 导出
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // 确认预约
+    $('.confirm-booking-btn').on('click', function() {
+        const bookingId = $(this).data('booking-id');
+
+        if (confirm('确定要确认这个预约吗？')) {
+            $.ajax({
+                url: '/admin/api/confirm_booking',
+                type: 'POST',
+                data: {booking_id: bookingId},
+                success: function(response) {
+                    if (response.success) {
+                        alert('预约已确认');
+                        location.reload();
+                    } else {
+                        alert('操作失败：' + response.message);
+                    }
+                },
+                error: function() {
+                    alert('操作失败，请重试');
+                }
+            });
+        }
+    });
+
+    // 取消预约
+    $('.cancel-booking-btn').on('click', function() {
+        const bookingId = $(this).data('booking-id');
+
+        if (confirm('确定要取消这个预约吗？')) {
+            $.ajax({
+                url: '/admin/api/cancel_booking',
+                type: 'POST',
+                data: {booking_id: bookingId},
+                success: function(response) {
+                    if (response.success) {
+                        alert('预约已取消');
+                        location.reload();
+                    } else {
+                        alert('操作失败：' + response.message);
+                    }
+                },
+                error: function() {
+                    alert('操作失败，请重试');
+                }
+            });
+        }
+    });
+
+    // 签到
+    $('.checkin-booking-btn').on('click', function() {
+        const bookingId = $(this).data('booking-id');
+
+        if (confirm('确定要为这个预约签到吗？')) {
+            $.ajax({
+                url: '/admin/api/checkin_booking',
+                type: 'POST',
+                data: {booking_id: bookingId},
+                success: function(response) {
+                    if (response.success) {
+                        alert('签到成功');
+                        location.reload();
+                    } else {
+                        alert('操作失败：' + response.message);
+                    }
+                },
+                error: function() {
+                    alert('操作失败，请重试');
+                }
+            });
+        }
+    });
+
+    // 签退
+    $('.checkout-booking-btn').on('click', function() {
+        const bookingId = $(this).data('booking-id');
+
+        if (confirm('确定要为这个预约签退吗？')) {
+            $.ajax({
+                url: '/admin/api/checkout_booking',
+                type: 'POST',
+                data: {booking_id: bookingId},
+                success: function(response) {
+                    if (response.success) {
+                        alert('签退成功');
+                        location.reload();
+                    } else {
+                        alert('操作失败：' + response.message);
+                    }
+                },
+                error: function() {
+                    alert('操作失败，请重试');
+                }
+            });
+        }
+    });
+
+    // 导出数据
+    $('#exportBtn').on('click', function() {
+        const exportType = $('#exportType').val();
+        const startDate = $('#exportStartDate').val();
+        const endDate = $('#exportEndDate').val();
+
+        let url = '/admin/api/export_data?type=' + exportType;
+        if (startDate) url += '&start_date=' + startDate;
+        if (endDate) url += '&end_date=' + endDate;
+
+        $.ajax({
+            url: url,
+            type: 'GET',
+            success: function(response) {
+                if (response.success) {
+                    exportToCsv(response.data, getExportFileName(exportType));
+                    $('#exportModal').modal('hide');
+                } else {
+                    alert('导出失败：' + response.message);
+                }
+            },
+            error: function() {
+                alert('导出失败，请重试');
+            }
+        });
+    });
+
+    function getExportFileName(type) {
+        const typeNames = {
+            'bookings': '预约数据',
+            'users': '用户数据',
+            'rooms': '自习室数据',
+            'announcements': '公告数据'
+        };
+        const now = new Date();
+        const dateStr = now.toISOString().split('T')[0];
+        return typeNames[type] + '_' + dateStr + '.csv';
+    }
+
+    function exportToCsv(data, filename) {
+        if (!data || data.length === 0) {
+            alert('没有数据可导出');
+            return;
+        }
+
+        const headers = Object.keys(data[0]);
+        let csvContent = headers.join(',') + '\n';
+
+        data.forEach(function(row) {
+            const values = headers.map(header => {
+                const value = row[header];
+                // 处理可能包含逗号的字段
+                if (typeof value === 'string' && (value.includes(',') || value.includes('\n'))) {
+                    return '"' + value.replace(/"/g, '""') + '"';
+                }
+                return value;
+            });
+            csvContent += values.join(',') + '\n';
+        });
+
+        const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+});
+</script>
+{% endblock %}

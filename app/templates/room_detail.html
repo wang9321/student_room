@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ room.name }} - 自习室详情</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .main-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            margin: 2rem auto;
+            padding: 2rem;
+            max-width: 1200px;
+        }
+        .room-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+        .room-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -10%;
+            width: 60%;
+            height: 200%;
+            background: rgba(255, 255, 255, 0.1);
+            transform: rotate(35deg);
+        }
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            margin-bottom: 1rem;
+            border: 1px solid #f0f0f0;
+            transition: all 0.3s ease;
+        }
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+        }
+        .seat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 15px;
+            margin-top: 2rem;
+        }
+        .seat-item {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .seat-item.available {
+            border-color: #28a745;
+            background: #f8fff9;
+        }
+        .seat-item.occupied {
+            border-color: #dc3545;
+            background: #fff8f8;
+        }
+        .seat-item.maintenance {
+            border-color: #ffc107;
+            background: #fffdf5;
+        }
+        .seat-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+        }
+        .seat-status {
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-top: 0.5rem;
+        }
+        .seat-number {
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        .facility-badge {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            padding: 0.5rem 1rem;
+            margin: 0.25rem;
+            font-size: 0.9rem;
+            backdrop-filter: blur(10px);
+        }
+        .back-button {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 50px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        .back-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.5);
+            color: white;
+            transform: translateY(-2px);
+        }
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin: 2rem 0;
+            flex-wrap: wrap;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 5px;
+            border: 2px solid;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="main-container">
+            <!-- 房间头部信息 -->
+            <div class="room-header">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h1 class="mb-3">
+                            <i class="bi bi-door-open"></i>
+                            {{ room.name }}
+                        </h1>
+                        <div class="d-flex flex-wrap">
+                            {% if room.location %}
+                            <span class="facility-badge">
+                                <i class="bi bi-geo-alt"></i> {{ room.location }}
+                            </span>
+                            {% endif %}
+                            {% if room.has_power %}
+                            <span class="facility-badge">
+                                <i class="bi bi-outlet"></i> 电源
+                            </span>
+                            {% endif %}
+                            {% if room.has_wifi %}
+                            <span class="facility-badge">
+                                <i class="bi bi-wifi"></i> WiFi
+                            </span>
+                            {% endif %}
+                            {% if room.has_air_conditioning %}
+                            <span class="facility-badge">
+                                <i class="bi bi-snow"></i> 空调
+                            </span>
+                            {% endif %}
+                            {% if room.is_quiet %}
+                            <span class="facility-badge">
+                                <i class="bi bi-volume-mute"></i> 安静区
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-md-end">
+                        <a href="{{ url_for('main.rooms_list') }}" class="btn back-button">
+                            <i class="bi bi-arrow-left"></i> 返回列表
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 统计信息 -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="text-center">
+                            <i class="bi bi-hourglass text-primary" style="font-size: 2rem;"></i>
+                            <h3 class="mt-2">{{ room.capacity }}</h3>
+                            <p class="text-muted mb-0">总座位数</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="text-center">
+                            <i class="bi bi-check-circle text-success" style="font-size: 2rem;"></i>
+                            <h3 class="mt-2">{{ room.available_seats_count }}</h3>
+                            <p class="text-muted mb-0">可用座位</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="text-center">
+                            <i class="bi bi-person text-danger" style="font-size: 2rem;"></i>
+                            <h3 class="mt-2">{{ room.occupied_seats_count }}</h3>
+                            <p class="text-muted mb-0">已占用</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="text-center">
+                            <i class="bi bi-graph-up text-info" style="font-size: 2rem;"></i>
+                            <h3 class="mt-2">{{ "%.1f"|format((room.occupied_seats_count / room.capacity * 100) if room.capacity > 0 else 0) }}%</h3>
+                            <p class="text-muted mb-0">占用率</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 图例 -->
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="border-color: #28a745; background: #f8fff9;"></div>
+                    <span>可用座位</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="border-color: #dc3545; background: #fff8f8;"></div>
+                    <span>已占用</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="border-color: #ffc107; background: #fffdf5;"></div>
+                    <span>维护中</span>
+                </div>
+            </div>
+
+            <!-- 座位网格 -->
+            <div class="card">
+                <div class="card-header bg-gradient text-white" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <h5 class="mb-0">
+                        <i class="bi bi-grid-3x3-gap"></i>
+                        座位布局
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if seats %}
+                    <div class="seat-grid">
+                        {% for seat in seats %}
+                        <div class="seat-item {{ seat.status }}" title="座位 {{ seat.seat_number }} - {% if seat.status == 'available' %}可用{% elif seat.status == 'occupied' %}已占用{% else %}维护中{% endif %}">
+                            <div class="seat-number">{{ seat.seat_number }}</div>
+                            <div class="seat-status">
+                                {% if seat.status == 'available' %}
+                                    <span class="text-success">可用</span>
+                                {% elif seat.status == 'occupied' %}
+                                    <span class="text-danger">已占用</span>
+                                {% else %}
+                                    <span class="text-warning">维护</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="bi bi-inbox" style="font-size: 3rem; color: #ccc;"></i>
+                        <p class="text-muted mt-3">暂无座位信息</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- 操作按钮 -->
+            <div class="text-center mt-4">
+                {% if current_user.is_authenticated and current_user.__class__.__name__ == 'Student' %}
+                <a href="{{ url_for('student.book_seat') }}?room_id={{ room.id }}" class="btn btn-lg btn-primary">
+                    <i class="bi bi-calendar-plus"></i> 立即预约座位
+                </a>
+                {% else %}
+                <a href="{{ url_for('auth.student_login') }}" class="btn btn-lg btn-primary">
+                    <i class="bi bi-box-arrow-in-right"></i> 登录后预约
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 页面加载动画
+        document.addEventListener('DOMContentLoaded', function() {
+            // 座位项目动画
+            const seats = document.querySelectorAll('.seat-item');
+            seats.forEach((seat, index) => {
+                seat.style.opacity = '0';
+                seat.style.transform = 'translateY(20px)';
+                setTimeout(() => {
+                    seat.style.transition = 'all 0.5s ease';
+                    seat.style.opacity = '1';
+                    seat.style.transform = 'translateY(0)';
+                }, index * 50);
+            });
+
+            // 统计卡片动画
+            const statCards = document.querySelectorAll('.stat-card');
+            statCards.forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                setTimeout(() => {
+                    card.style.transition = 'all 0.5s ease';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 100 + 200);
+            });
+        });
+    </script>
+</body>
+</html>

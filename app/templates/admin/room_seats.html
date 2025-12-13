@@ -1,0 +1,622 @@
+{% extends "common/base.html" %}
+
+{% block title %}{{ room.name }} - 座位管理 - 管理员后台{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- 页面标题 -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <a href="{{ url_for('admin.rooms') }}" class="btn btn-outline-secondary me-3">
+                <i class="bi bi-arrow-left"></i> 返回自习室
+            </a>
+            <h4 class="d-inline-block">
+                <i class="bi bi-grid-3x3"></i> {{ room.name }} - 座位管理
+            </h4>
+            <span class="badge bg-{{ 'success' if room.status == 'open' else 'secondary' }}">
+                {{ '开放' if room.status == 'open' else '关闭' }}
+            </span>
+        </div>
+        <div class="btn-group">
+            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addSeatModal">
+                <i class="bi bi-plus"></i> 添加座位
+            </button>
+            <button type="button" class="btn btn-primary" id="autoGenerateSeats">
+                <i class="bi bi-grid-3x3-gap"></i> 批量生成
+            </button>
+        </div>
+    </div>
+
+    <!-- 自习室信息 -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3">
+                    <p><strong>编号:</strong> {{ room.room_number }}</p>
+                    <p><strong>楼宇:</strong> {{ room.building }}</p>
+                </div>
+                <div class="col-md-3">
+                    <p><strong>楼层:</strong> {{ room.floor }}</p>
+                    <p><strong>容量:</strong> {{ room.capacity }} 人</p>
+                </div>
+                <div class="col-md-3">
+                    <p><strong>开放时间:</strong> {{ room.open_time }} - {{ room.close_time }}</p>
+                    <p><strong>总座位数:</strong> <span id="totalSeats">{{ seats|length }}</span></p>
+                </div>
+                <div class="col-md-3">
+                    <p><strong>可用座位:</strong> <span class="badge bg-success" id="availableSeats">{{ room.available_seats_count }}</span></p>
+                    <p><strong>维护中:</strong> <span class="badge bg-warning" id="maintenanceSeats">{{ room.seats.filter_by(status='maintenance').count() }}</span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 座位网格视图 -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h6 class="card-title mb-0">座位布局</h6>
+        </div>
+        <div class="card-body">
+            <div class="mb-3">
+                <button type="button" class="btn btn-sm btn-outline-primary" id="toggleViewBtn">
+                    <i class="bi bi-list"></i> 切换视图
+                </button>
+            </div>
+
+            <!-- 网格视图 -->
+            <div id="gridView" class="seat-grid">
+                {% for seat in seats %}
+                <div class="seat-item seat-{{ seat.status }}"
+                     data-seat-id="{{ seat.id }}"
+                     data-seat-number="{{ seat.seat_number }}"
+                     data-seat-type="{{ seat.type }}"
+                     data-seat-status="{{ seat.status }}"
+                     data-power-socket="{{ seat.power_socket }}"
+                     data-window-seat="{{ seat.window_seat }}"
+                     title="座位: {{ seat.seat_number }}\n类型: {{ seat.type }}\n状态: {{ seat.status }}">
+                    <div class="seat-number">{{ seat.seat_number }}</div>
+                    <div class="seat-icons">
+                        {% if seat.power_socket %}<i class="bi bi-plug-fill" title="有电源"></i>{% endif %}
+                        {% if seat.window_seat %}<i class="bi bi-sun-fill" title="靠窗"></i>{% endif %}
+                        {% if seat.type == 'computer' %}<i class="bi bi-pc-display" title="电脑座位"></i>{% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- 列表视图 -->
+            <div id="listView" class="table-responsive" style="display: none;">
+                <table class="table table-bordered table-hover">
+                    <thead>
+                        <tr>
+                            <th>座位编号</th>
+                            <th>类型</th>
+                            <th>状态</th>
+                            <th>电源</th>
+                            <th>靠窗</th>
+                            <th>描述</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for seat in seats %}
+                        <tr>
+                            <td>{{ seat.seat_number }}</td>
+                            <td>
+                                {% if seat.type == 'regular' %}普通座
+                                {% elif seat.type == 'window' %}靠窗座
+                                {% elif seat.type == 'power' %}电源座
+                                {% elif seat.type == 'computer' %}电脑座
+                                {% else %}{{ seat.type }}{% endif %}
+                            </td>
+                            <td>
+                                {% if seat.status == 'available' %}
+                                    <span class="badge bg-success">可用</span>
+                                {% elif seat.status == 'occupied' %}
+                                    <span class="badge bg-danger">占用</span>
+                                {% elif seat.status == 'maintenance' %}
+                                    <span class="badge bg-warning">维护</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ '是' if seat.power_socket else '否' }}</td>
+                            <td>{{ '是' if seat.window_seat else '否' }}</td>
+                            <td>{{ seat.description or '-' }}</td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <button type="button" class="btn btn-outline-primary edit-seat-btn"
+                                            data-seat-id="{{ seat.id }}"
+                                            data-seat-number="{{ seat.seat_number }}"
+                                            data-seat-type="{{ seat.type }}"
+                                            data-seat-status="{{ seat.status }}"
+                                            data-power-socket="{{ seat.power_socket }}"
+                                            data-window-seat="{{ seat.window_seat }}"
+                                            data-description="{{ seat.description or '' }}">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    {% if seat.status == 'available' %}
+                                    <button type="button" class="btn btn-outline-warning set-maintenance-btn"
+                                            data-seat-id="{{ seat.id }}">
+                                        <i class="bi bi-tools"></i>
+                                    </button>
+                                    {% elif seat.status == 'maintenance' %}
+                                    <button type="button" class="btn btn-outline-success set-available-btn"
+                                            data-seat-id="{{ seat.id }}">
+                                        <i class="bi bi-check-circle"></i>
+                                    </button>
+                                    {% endif %}
+                                    <button type="button" class="btn btn-outline-danger delete-seat-btn"
+                                            data-seat-id="{{ seat.id }}"
+                                            data-seat-number="{{ seat.seat_number }}">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {% if not seats %}
+            <div class="text-center py-5">
+                <i class="bi bi-grid-3x3-gap display-1 text-muted"></i>
+                <h5 class="text-muted mt-3">暂无座位</h5>
+                <p class="text-muted">点击上方"批量生成"按钮快速创建座位</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- 添加座位模态框 -->
+<div class="modal fade" id="addSeatModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">添加座位</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="addSeatForm">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">座位编号 *</label>
+                        <input type="text" class="form-control" name="seat_number" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">座位类型 *</label>
+                        <select class="form-select" name="type" required>
+                            <option value="regular">普通座</option>
+                            <option value="window">靠窗座</option>
+                            <option value="power">电源座</option>
+                            <option value="computer">电脑座</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">状态</label>
+                        <select class="form-select" name="status">
+                            <option value="available" selected>可用</option>
+                            <option value="maintenance">维护</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="power_socket" id="powerSocketCheck">
+                            <label class="form-check-label" for="powerSocketCheck">
+                                配备电源
+                            </label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="window_seat" id="windowSeatCheck">
+                            <label class="form-check-label" for="windowSeatCheck">
+                                靠窗位置
+                            </label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">描述</label>
+                        <textarea class="form-control" name="description" rows="2" placeholder="座位位置描述等"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary">添加</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 编辑座位模态框 -->
+<div class="modal fade" id="editSeatModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">编辑座位</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editSeatForm">
+                <input type="hidden" name="seat_id">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">座位编号 *</label>
+                        <input type="text" class="form-control" name="seat_number" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">座位类型 *</label>
+                        <select class="form-select" name="type" required>
+                            <option value="regular">普通座</option>
+                            <option value="window">靠窗座</option>
+                            <option value="power">电源座</option>
+                            <option value="computer">电脑座</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">状态</label>
+                        <select class="form-select" name="status">
+                            <option value="available">可用</option>
+                            <option value="occupied">占用</option>
+                            <option value="maintenance">维护</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="power_socket" id="editPowerSocketCheck">
+                            <label class="form-check-label" for="editPowerSocketCheck">
+                                配备电源
+                            </label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="window_seat" id="editWindowSeatCheck">
+                            <label class="form-check-label" for="editWindowSeatCheck">
+                                靠窗位置
+                            </label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">描述</label>
+                        <textarea class="form-control" name="description" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary">更新</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 批量生成座位模态框 -->
+<div class="modal fade" id="generateSeatsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">批量生成座位</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="generateSeatsForm">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">行数</label>
+                            <input type="number" class="form-control" name="rows" min="1" max="20" value="5">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">列数</label>
+                            <input type="number" class="form-control" name="columns" min="1" max="20" value="8">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">座位编号前缀</label>
+                        <input type="text" class="form-control" name="prefix" value="S" placeholder="如：S">
+                        <div class="form-text">座位编号格式：前缀+行+列，如：S-A1, S-A2...</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">座位分布设置</label>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="window_seats" id="windowSeatsCheck">
+                                    <label class="form-check-label" for="windowSeatsCheck">
+                                        靠窗座位（第一排和最后一排）
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="power_seats" id="powerSeatsCheck" checked>
+                                    <label class="form-check-label" for="powerSeatsCheck">
+                                        电源座位（随机分布30%）
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i>
+                        将生成 <span id="totalSeatsPreview">40</span> 个座位
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary">生成座位</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // 切换视图
+    $('#toggleViewBtn').on('click', function() {
+        const gridView = $('#gridView');
+        const listView = $('#listView');
+
+        if (gridView.is(':visible')) {
+            gridView.hide();
+            listView.show();
+            $(this).html('<i class="bi bi-grid-3x3-gap"></i> 网格视图');
+        } else {
+            gridView.show();
+            listView.hide();
+            $(this).html('<i class="bi bi-list"></i> 列表视图');
+        }
+    });
+
+    // 添加座位
+    $('#addSeatForm').on('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        formData.append('room_id', {{ room.id }});
+
+        $.ajax({
+            url: '/admin/api/add_seat',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                if (response.success) {
+                    alert('座位添加成功！');
+                    location.reload();
+                } else {
+                    alert('添加失败：' + response.message);
+                }
+            },
+            error: function() {
+                alert('添加失败，请重试');
+            }
+        });
+    });
+
+    // 编辑座位
+    $('.edit-seat-btn').on('click', function() {
+        const btn = $(this);
+        $('#editSeatForm input[name="seat_id"]').val(btn.data('seat-id'));
+        $('#editSeatForm input[name="seat_number"]').val(btn.data('seat-number'));
+        $('#editSeatForm select[name="type"]').val(btn.data('seat-type'));
+        $('#editSeatForm select[name="status"]').val(btn.data('seat-status'));
+        $('#editSeatForm input[name="power_socket"]').prop('checked', btn.data('power-socket') === 'True');
+        $('#editSeatForm input[name="window_seat"]').prop('checked', btn.data('window-seat') === 'True');
+        $('#editSeatForm textarea[name="description"]').val(btn.data('description'));
+
+        $('#editSeatModal').modal('show');
+    });
+
+    $('#editSeatForm').on('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+
+        $.ajax({
+            url: '/admin/api/update_seat',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                if (response.success) {
+                    alert('座位更新成功！');
+                    location.reload();
+                } else {
+                    alert('更新失败：' + response.message);
+                }
+            },
+            error: function() {
+                alert('更新失败，请重试');
+            }
+        });
+    });
+
+    // 设置座位维护状态
+    $('.set-maintenance-btn').on('click', function() {
+        const seatId = $(this).data('seat-id');
+
+        if (confirm('确定要设置该座位为维护状态吗？')) {
+            $.ajax({
+                url: '/admin/api/set_seat_maintenance',
+                type: 'POST',
+                data: {seat_id: seatId},
+                success: function(response) {
+                    if (response.success) {
+                        alert('座位已设置为维护状态');
+                        location.reload();
+                    } else {
+                        alert('操作失败：' + response.message);
+                    }
+                },
+                error: function() {
+                    alert('操作失败，请重试');
+                }
+            });
+        }
+    });
+
+    // 设置座位可用状态
+    $('.set-available-btn').on('click', function() {
+        const seatId = $(this).data('seat-id');
+
+        if (confirm('确定要设置该座位为可用状态吗？')) {
+            $.ajax({
+                url: '/admin/api/set_seat_available',
+                type: 'POST',
+                data: {seat_id: seatId},
+                success: function(response) {
+                    if (response.success) {
+                        alert('座位已设置为可用状态');
+                        location.reload();
+                    } else {
+                        alert('操作失败：' + response.message);
+                    }
+                },
+                error: function() {
+                    alert('操作失败，请重试');
+                }
+            });
+        }
+    });
+
+    // 删除座位
+    $('.delete-seat-btn').on('click', function() {
+        const seatId = $(this).data('seat-id');
+        const seatNumber = $(this).data('seat-number');
+
+        if (confirm(`确定要删除座位 ${seatNumber} 吗？此操作不可恢复！`)) {
+            $.ajax({
+                url: '/admin/api/delete_seat',
+                type: 'POST',
+                data: {seat_id: seatId},
+                success: function(response) {
+                    if (response.success) {
+                        alert('座位删除成功');
+                        location.reload();
+                    } else {
+                        alert('删除失败：' + response.message);
+                    }
+                },
+                error: function() {
+                    alert('删除失败，请重试');
+                }
+            });
+        }
+    });
+
+    // 批量生成座位
+    $('#autoGenerateSeats').on('click', function() {
+        $('#generateSeatsModal').modal('show');
+    });
+
+    // 预览座位总数
+    $('#generateSeatsForm input[name="rows"], #generateSeatsForm input[name="columns"]').on('input', function() {
+        const rows = parseInt($('#generateSeatsForm input[name="rows"]').val()) || 0;
+        const columns = parseInt($('#generateSeatsForm input[name="columns"]').val()) || 0;
+        $('#totalSeatsPreview').text(rows * columns);
+    });
+
+    $('#generateSeatsForm').on('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        formData.append('room_id', {{ room.id }});
+
+        $.ajax({
+            url: '/admin/api/generate_seats',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                if (response.success) {
+                    alert(`成功生成 ${response.seat_count} 个座位！`);
+                    location.reload();
+                } else {
+                    alert('生成失败：' + response.message);
+                }
+            },
+            error: function() {
+                alert('生成失败，请重试');
+            }
+        });
+    });
+
+    // 座位网格点击事件
+    $('.seat-item').on('click', function() {
+        const seatId = $(this).data('seat-id');
+        const seatNumber = $(this).data('seat-number');
+        const status = $(this).data('seat-status');
+
+        if (status === 'available' || status === 'maintenance') {
+            // 获取对应的编辑按钮并触发点击
+            $(`.edit-seat-btn[data-seat-id="${seatId}"]`).click();
+        } else {
+            alert(`座位 ${seatNumber} 当前被占用，无法编辑`);
+        }
+    });
+});
+</script>
+
+<style>
+.seat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 10px;
+    padding: 20px;
+}
+
+.seat-item {
+    aspect-ratio: 1;
+    border: 2px solid #dee2e6;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.seat-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.seat-item.seat-available {
+    background-color: #d1f2eb;
+    border-color: #198754;
+}
+
+.seat-item.seat-occupied {
+    background-color: #f8d7da;
+    border-color: #dc3545;
+    cursor: not-allowed;
+}
+
+.seat-item.seat-maintenance {
+    background-color: #fff3cd;
+    border-color: #ffc107;
+}
+
+.seat-number {
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.seat-icons {
+    font-size: 10px;
+    color: #6c757d;
+    display: flex;
+    gap: 2px;
+    margin-top: 2px;
+}
+
+.seat-icons i {
+    font-size: 12px;
+}
+</style>
+{% endblock %}

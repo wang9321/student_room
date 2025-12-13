@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+
+{% block title %}预约座位 - 校园自习室预约系统{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2>
+            <i class="bi bi-calendar-plus"></i> 预约座位
+            <a href="{{ url_for('booking.select_seats', room_id=seat.study_room_id) }}" class="btn btn-secondary float-end">
+                <i class="bi bi-arrow-left"></i> 返回选择座位
+            </a>
+        </h2>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">预约座位 {{ seat.seat_number }}</h5>
+                <small class="text-muted">{{ seat.study_room.name }} - {{ seat.study_room.location }}</small>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    {{ form.hidden_tag() }}
+
+                    <!-- 座位信息展示 -->
+                    <div class="alert alert-info">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <strong>座位号：</strong>{{ seat.seat_number }}
+                            </div>
+                            <div class="col-md-6">
+                                <strong>类型：</strong>
+                                {% if seat.seat_type == 'window' %}
+                                    <span class="badge bg-info">靠窗座位</span>
+                                {% elif seat.seat_type == 'power' %}
+                                    <span class="badge bg-warning">电源座位</span>
+                                {% else %}
+                                    <span class="badge bg-success">标准座位</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% if seat.description %}
+                        <div class="mt-2">
+                            <strong>描述：</strong>{{ seat.description }}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.start_time.label(class="form-label") }}
+                                {{ form.start_time(class="form-control" + (" is-invalid" if form.start_time.errors else "")) }}
+                                {% if form.start_time.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.start_time.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">预约开始时间</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.end_time.label(class="form-label") }}
+                                {{ form.end_time(class="form-control" + (" is-invalid" if form.end_time.errors else "")) }}
+                                {% if form.end_time.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.end_time.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">预约结束时间</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form.purpose.label(class="form-label") }}
+                        {{ form.purpose(class="form-control" + (" is-invalid" if form.purpose.errors else ""), rows="3") }}
+                        {% if form.purpose.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.purpose.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">预约目的（选填）</div>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('booking.select_seats', room_id=seat.study_room_id) }}" class="btn btn-secondary">
+                            取消
+                        </a>
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">自习室信息</h6>
+            </div>
+            <div class="card-body">
+                <h6>{{ seat.study_room.name }}</h6>
+                <p class="small text-muted mb-2">{{ seat.study_room.location }}</p>
+
+                <div class="mb-3">
+                    <strong>开放时间：</strong><br>
+                    {{ seat.study_room.open_time.strftime('%H:%M') }} - {{ seat.study_room.close_time.strftime('%H:%M') }}
+                </div>
+
+                {% if seat.study_room.description %}
+                <div class="mb-3">
+                    <strong>描述：</strong><br>
+                    <small>{{ seat.study_room.description }}</small>
+                </div>
+                {% endif %}
+
+                <div class="alert alert-warning small">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <strong>重要提醒：</strong>
+                    <ul class="mb-0 mt-2">
+                        <li>预约后请在开始时间前15分钟内签到</li>
+                        <li>超时未签到将自动取消预约</li>
+                        <li>使用结束后请及时签退座位</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="mb-0">我的预约</h6>
+            </div>
+            <div class="card-body">
+                <p class="small text-muted mb-2">您当前的预约状态</p>
+                <a href="{{ url_for('booking.my_bookings') }}" class="btn btn-outline-primary btn-sm w-100">
+                    <i class="bi bi-calendar-check"></i> 查看我的预约
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// 设置最小时间限制为当前时间
+document.addEventListener('DOMContentLoaded', function() {
+    const startInput = document.querySelector('input[name="start_time"]');
+    const endInput = document.querySelector('input[name="end_time"]');
+
+    // 设置最小值为当前时间
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(Math.ceil(now.getMinutes() / 15) * 15).padStart(2, '0');
+
+    const minDateTime = `${year}-${month}-${day}T${hours}:${minutes}`;
+
+    if (startInput) {
+        startInput.min = minDateTime;
+        startInput.addEventListener('change', function() {
+            if (endInput) {
+                // 设置结束时间最小值为开始时间+1小时
+                const startDateTime = new Date(this.value);
+                const minEndTime = new Date(startDateTime.getTime() + 60 * 60 * 1000);
+
+                const endMinDateTime = minEndTime.toISOString().slice(0, 16);
+                endInput.min = endMinDateTime;
+
+                // 如果当前结束时间小于最小值，更新结束时间
+                if (endInput.value && new Date(endInput.value) < minEndTime) {
+                    endInput.value = endMinDateTime;
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,657 @@
+{% extends "common/base.html" %}
+
+{% block title %}自习室列表 - 电子科技大学成都学院自习室预约系统{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- 页面标题 -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-gradient-primary text-white">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-door-open me-3" style="font-size: 2rem;"></i>
+                        <div>
+                            <h2 class="mb-1">自习室列表</h2>
+                            <p class="mb-0 opacity-75">查看所有可用的自习室和实时座位信息</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="bi bi-search"></i>
+                                </span>
+                                <input type="text" class="form-control" id="roomSearch" placeholder="搜索自习室名称或地点...">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select" id="floorFilter">
+                                <option value="">所有楼层</option>
+                                <option value="1">1楼</option>
+                                <option value="2">2楼</option>
+                                <option value="3">3楼</option>
+                                <option value="4">4楼</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            {% if current_user.is_authenticated and current_user.__class__.__name__ == 'Student' %}
+                            <a href="{{ url_for('student.rooms') }}" class="btn btn-outline-primary w-100">
+                                <i class="bi bi-box-arrow-in-right"></i> 学生登录查看详情
+                            </a>
+                            {% else %}
+                            <div class="d-grid gap-2">
+                                <a href="{{ url_for('auth.login') }}" class="btn btn-primary">
+                                    <i class="bi bi-box-arrow-in-right"></i> 登录查看详情
+                                </a>
+                                <a href="{{ url_for('auth.register') }}" class="btn btn-success">
+                                    <i class="bi bi-person-plus"></i> 立即注册
+                                </a>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 统计信息 -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-success text-white shadow">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0">{{ stats.total_rooms }}</h4>
+                            <small>开放自习室</small>
+                        </div>
+                        <i class="bi bi-door-open" style="font-size: 2rem; opacity: 0.8;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white shadow">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0">{{ stats.total_seats }}</h4>
+                            <small>总座位数</small>
+                        </div>
+                        <i class="bi bi-grid" style="font-size: 2rem; opacity: 0.8;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white shadow">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0">{{ stats.available_seats }}</h4>
+                            <small>可用座位</small>
+                        </div>
+                        <i class="bi bi-check-circle" style="font-size: 2rem; opacity: 0.8;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-danger text-white shadow">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0">{{ stats.occupied_seats }}</h4>
+                            <small>已占用</small>
+                        </div>
+                        <i class="bi bi-person-fill" style="font-size: 2rem; opacity: 0.8;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 自习室列表 -->
+    <div class="row" id="roomsList">
+        {% for item in room_info %}
+        <div class="col-lg-4 col-md-6 mb-4 room-item"
+             data-floor="{{ item.room.floor|default('') }}"
+             data-status="{{ item.room.status }}"
+             data-name="{{ item.room.name|lower }}">
+            <div class="card h-100 shadow-sm border-0 room-card">
+                <div class="card-header bg-gradient-primary text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">{{ item.room.name }}</h5>
+                        {% if item.room.status == 'open' %}
+                        <span class="badge bg-light text-success">开放中</span>
+                        {% elif item.room.status == 'closed' %}
+                        <span class="badge bg-secondary">已关闭</span>
+                        {% else %}
+                        <span class="badge bg-warning">维护中</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <small class="text-muted">地点</small>
+                            <p class="mb-1 fw-bold">{{ item.room.location|default('图书馆') }}</p>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">楼层</small>
+                            <p class="mb-1 fw-bold">{{ item.room.floor|default('未设置') }}楼</p>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <small class="text-muted">座位总数</small>
+                            <p class="mb-1 fw-bold">{{ item.total_count }}</p>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">可用座位</small>
+                            <p class="mb-1 fw-bold text-success">{{ item.available_count }}</p>
+                        </div>
+                    </div>
+
+                    <!-- 占用率进度条 -->
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <small class="text-muted">占用率</small>
+                            <small class="text-muted">{{ "%.1f"|format(item.occupancy_rate) }}%</small>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            {% if item.occupancy_rate < 30 %}
+                            <div class="progress-bar bg-success" style="width: {{ item.occupancy_rate }}%"></div>
+                            {% elif item.occupancy_rate < 70 %}
+                            <div class="progress-bar bg-warning" style="width: {{ item.occupancy_rate }}%"></div>
+                            {% else %}
+                            <div class="progress-bar bg-danger" style="width: {{ item.occupancy_rate }}%"></div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- 设施标签 -->
+                    <div class="mb-3">
+                        {% if item.room.has_power %}
+                        <span class="badge bg-light text-dark me-1">
+                            <i class="bi bi-plug"></i> 电源
+                        </span>
+                        {% endif %}
+                        {% if item.room.has_wifi %}
+                        <span class="badge bg-light text-dark me-1">
+                            <i class="bi bi-wifi"></i> WiFi
+                        </span>
+                        {% endif %}
+                        {% if item.room.has_air_conditioning %}
+                        <span class="badge bg-light text-dark me-1">
+                            <i class="bi bi-snow"></i> 空调
+                        </span>
+                        {% endif %}
+                        {% if item.room.is_quiet %}
+                        <span class="badge bg-info text-white me-1">
+                            <i class="bi bi-volume-mute"></i> 安静区
+                        </span>
+                        {% endif %}
+                    </div>
+
+                    {% if item.room.description %}
+                    <p class="text-muted small mb-0">{{ item.room.description[:100] }}...</p>
+                    {% endif %}
+                </div>
+                <div class="card-footer bg-transparent">
+                    <div class="btn-group w-100" role="group">
+                        <button class="btn btn-outline-primary" onclick="viewRoomDetails({{ item.room.id }})">
+                            <i class="bi bi-eye"></i> 查看详情
+                        </button>
+                        {% if current_user.is_authenticated and current_user.__class__.__name__ == 'Student' %}
+                        <a href="{{ url_for('student.rooms') }}" class="btn btn-primary">
+                            <i class="bi bi-grid-3x3-gap"></i> 预约座位
+                        </a>
+                        {% elif item.room.status == 'open' and item.available_count > 0 %}
+                        <a href="{{ url_for('auth.login') }}" class="btn btn-outline-success">
+                            <i class="bi bi-box-arrow-in-right"></i> 登录预约
+                        </a>
+                        {% elif item.room.status != 'open' %}
+                        <button class="btn btn-secondary" disabled>
+                            <i class="bi bi-x-circle"></i> 暂不开放
+                        </button>
+                        {% else %}
+                        <button class="btn btn-outline-warning" disabled>
+                            <i class="bi bi-exclamation-triangle"></i> 已满座
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% if not room_info %}
+    <div class="row">
+        <div class="col-12">
+            <div class="text-center py-5">
+                <i class="bi bi-door-closed text-muted" style="font-size: 4rem;"></i>
+                <h4 class="text-muted mt-3">暂无开放的自习室</h4>
+                <p class="text-muted">请稍后再试或联系管理员了解最新情况</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- 房间详情模态框 -->
+<div class="modal fade" id="roomDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-door-open"></i>
+                    <span id="modalRoomName">自习室详情</span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="roomDetailContent">
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">加载中...</span>
+                    </div>
+                    <p class="text-muted mt-2">正在加载房间详情...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                {% if current_user.is_authenticated and current_user.__class__.__name__ == 'Student' %}
+                <button type="button" class="btn btn-primary" id="bookRoomBtn">
+                    <i class="bi bi-calendar-plus"></i> 预约座位
+                </button>
+                {% else %}
+                <a href="{{ url_for('auth.login') }}" class="btn btn-primary">
+                    <i class="bi bi-box-arrow-in-right"></i> 登录预约
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 开放时间说明 -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-clock me-2"></i>开放时间
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>平时开放时间</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="bi bi-check-circle text-success me-2"></i>周一至周五：8:00 - 22:00</li>
+                            <li><i class="bi bi-check-circle text-success me-2"></i>节假日：9:00 - 21:00</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>使用须知</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="bi bi-info-circle text-info me-2"></i>请保持安静，禁止喧哗</li>
+                            <li><i class="bi bi-info-circle text-info me-2"></i>爱护公共设施，保持整洁</li>
+                            <li><i class="bi bi-info-circle text-info me-2"></i>离开时请带走个人物品</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 搜索功能
+document.getElementById('roomSearch').addEventListener('input', filterRooms);
+document.getElementById('floorFilter').addEventListener('change', filterRooms);
+
+function filterRooms() {
+    const searchTerm = document.getElementById('roomSearch').value.toLowerCase();
+    const floorFilter = document.getElementById('floorFilter').value;
+
+    document.querySelectorAll('.room-item').forEach(item => {
+        const name = item.dataset.name || '';
+        const floor = item.dataset.floor || '';
+        const status = item.dataset.status;
+
+        let show = true;
+
+        if (searchTerm && !name.includes(searchTerm)) {
+            show = false;
+        }
+
+        if (floorFilter && floor !== floorFilter) {
+            show = false;
+        }
+
+        // 只显示开放的自习室
+        if (status !== 'open') {
+            show = false;
+        }
+
+        item.style.display = show ? 'block' : 'none';
+    });
+}
+
+// 查看房间详情
+function viewRoomDetails(roomId) {
+    const modal = new bootstrap.Modal(document.getElementById('roomDetailModal'));
+    document.getElementById('modalRoomName').textContent = '加载中...';
+
+    // 显示加载状态
+    document.getElementById('roomDetailContent').innerHTML = `
+        <div class="text-center py-4">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">加载中...</span>
+            </div>
+            <p class="text-muted mt-2">正在加载房间详情...</p>
+        </div>
+    `;
+
+    modal.show();
+
+    // 通过AJAX获取真实的房间数据
+    fetch(`/api/room/${roomId}/details`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.room) {
+                displayRoomDetails(data.room);
+            } else {
+                throw new Error(data.message || '数据加载失败');
+            }
+        })
+        .catch(error => {
+            console.error('Error loading room details:', error);
+            document.getElementById('roomDetailContent').innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    无法加载房间详情，请稍后重试
+                </div>
+            `;
+        });
+}
+
+// 显示房间详情
+function displayRoomDetails(roomData) {
+    document.getElementById('modalRoomName').textContent = roomData.name;
+
+    const content = `
+        <div class="row">
+            <div class="col-md-6">
+                <h6><i class="bi bi-geo-alt text-primary me-2"></i>基本信息</h6>
+                <table class="table table-sm">
+                    <tr>
+                        <td><strong>位置：</strong></td>
+                        <td>${roomData.location || '未设置'}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>楼层：</strong></td>
+                        <td>${roomData.floor || '未设置'}楼</td>
+                    </tr>
+                    <tr>
+                        <td><strong>开放时间：</strong></td>
+                        <td>${roomData.open_time || '未设置'} - ${roomData.close_time || '未设置'}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>房间类型：</strong></td>
+                        <td>${getRoomTypeText(roomData.room_type)}</td>
+                    </tr>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <h6><i class="bi bi-bar-chart text-success me-2"></i>座位统计</h6>
+                <div class="row text-center">
+                    <div class="col-4">
+                        <div class="p-2 bg-light rounded">
+                            <h5 class="mb-0">${roomData.capacity}</h5>
+                            <small>总座位</small>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="p-2 bg-success text-white rounded">
+                            <h5 class="mb-0">${roomData.available_seats}</h5>
+                            <small>可用</small>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="p-2 bg-danger text-white rounded">
+                            <h5 class="mb-0">${roomData.occupied_seats}</h5>
+                            <small>占用</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <div class="progress" style="height: 10px;">
+                        <div class="progress-bar bg-danger" style="width: ${roomData.occupancy_rate}%"></div>
+                    </div>
+                    <small class="text-muted">占用率: ${roomData.occupancy_rate.toFixed(1)}%</small>
+                </div>
+            </div>
+        </div>
+
+        <hr>
+
+        <h6><i class="bi bi-tools text-warning me-2"></i>设施配置</h6>
+        <div class="d-flex flex-wrap gap-2 mb-3">
+            ${roomData.facilities.has_power ? '<span class="badge bg-success"><i class="bi bi-plug"></i> 电源</span>' : ''}
+            ${roomData.facilities.has_wifi ? '<span class="badge bg-info"><i class="bi bi-wifi"></i> WiFi</span>' : ''}
+            ${roomData.facilities.has_air_conditioning ? '<span class="badge bg-primary"><i class="bi bi-snow"></i> 空调</span>' : ''}
+            ${roomData.facilities.is_quiet ? '<span class="badge bg-warning text-dark"><i class="bi bi-volume-mute"></i> 安静区</span>' : ''}
+        </div>
+
+        <h6><i class="bi bi-grid text-info me-2"></i>座位布局预览</h6>
+        <div class="seat-layout p-3 bg-light rounded">
+            ${generateSeatLayoutPreview(roomData.seats)}
+        </div>
+
+        ${roomData.description ? `
+        <hr>
+        <h6><i class="bi bi-info-circle text-secondary me-2"></i>房间描述</h6>
+        <p class="text-muted">${roomData.description}</p>
+        ` : ''}
+    `;
+
+    document.getElementById('roomDetailContent').innerHTML = content;
+
+    // 设置预约按钮功能
+    const bookBtn = document.getElementById('bookRoomBtn');
+    if (bookBtn) {
+        bookBtn.onclick = function() {
+            modal.hide();
+            // 跳转到学生预约页面
+            window.location.href = '/student/book_seat';
+        };
+    }
+}
+
+// 获取房间类型文本
+function getRoomTypeText(roomType) {
+    const roomTypes = {
+        'regular': '普通自习室',
+        'quiet': '安静自习室',
+        'discussion': '讨论区',
+        'computer': '电子阅览室'
+    };
+    return roomTypes[roomType] || '普通自习室';
+}
+
+// 生成座位布局预览
+function generateSeatLayoutPreview(seats) {
+    if (!seats || seats.length === 0) {
+        return '<p class="text-muted">暂无座位信息</p>';
+    }
+
+    let html = '<div class="row g-2">';
+    seats.slice(0, 24).forEach(seat => {
+        const icon = seat.available ? 'bi-square' : 'bi-square-fill';
+        const color = seat.available ? 'text-success' : 'text-danger';
+        const title = `座位 ${seat.number} - ${seat.available ? '可用' : '占用'}`;
+
+        html += `
+            <div class="col-auto">
+                <div class="seat-preview ${color}" title="${title}">
+                    <i class="bi ${icon}"></i>
+                    <small class="d-block text-center">${seat.number}</small>
+                    ${seat.power_socket ? '<i class="bi bi-plug small"></i>' : ''}
+                </div>
+            </div>
+        `;
+    });
+    html += '</div>';
+
+    // 统计信息
+    const availableCount = seats.filter(seat => seat.available).length;
+    const occupiedCount = seats.length - availableCount;
+
+    html += `
+        <div class="mt-3 small text-muted">
+            <span class="me-3"><i class="bi bi-square text-success"></i> 可用 (${availableCount})</span>
+            <span class="me-3"><i class="bi bi-square-fill text-danger"></i> 占用 (${occupiedCount})</span>
+            <span class="me-3"><i class="bi bi-plug"></i> 电源</span>
+            <span class="me-3"><i class="bi bi-sun"></i> 窗边</span>
+            <span><i class="bi bi-pc-display"></i> 电脑</span>
+        </div>
+    `;
+
+    return html;
+}
+
+// 页面加载时应用筛选
+document.addEventListener('DOMContentLoaded', function() {
+    filterRooms();
+});
+</script>
+
+<style>
+.room-card {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.room-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
+}
+
+.bg-gradient-primary {
+    background: linear-gradient(135deg, var(--primary-color) 0%, #004494 100%) !important;
+}
+
+/* 座位预览样式 */
+.seat-preview {
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    text-align: center;
+    min-width: 40px;
+    transition: all 0.2s ease;
+}
+
+.seat-preview:hover {
+    transform: scale(1.1);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.seat-layout {
+    border: 1px dashed #dee2e6;
+    border-radius: 8px;
+    background-color: #f8f9fa;
+}
+
+/* 按钮组样式 */
+.btn-group .btn {
+    border-radius: 0;
+    flex: 1;
+}
+
+.btn-group .btn:first-child {
+    border-top-left-radius: 0.375rem;
+    border-bottom-left-radius: 0.375rem;
+}
+
+.btn-group .btn:last-child {
+    border-top-right-radius: 0.375rem;
+    border-bottom-right-radius: 0.375rem;
+}
+
+/* 统计卡片样式 */
+.card-body .row.text-center > div {
+    transition: transform 0.2s ease;
+}
+
+.card-body .row.text-center > div:hover {
+    transform: translateY(-2px);
+}
+
+/* 模态框样式增强 */
+.modal-header {
+    background: linear-gradient(135deg, var(--primary-color) 0%, #004494 100%);
+    color: white;
+}
+
+.modal-header .btn-close {
+    filter: brightness(0) invert(1);
+}
+
+/* 进度条动画 */
+.progress-bar {
+    transition: width 0.3s ease;
+}
+
+/* 徽章动画 */
+.badge {
+    transition: transform 0.2s ease;
+}
+
+.badge:hover {
+    transform: scale(1.05);
+}
+
+/* 响应式优化 */
+@media (max-width: 768px) {
+    .btn-group.w-100 {
+        flex-direction: column;
+    }
+
+    .btn-group .btn {
+        border-radius: 0.375rem !important;
+        margin-bottom: 0.5rem;
+    }
+
+    .btn-group .btn:last-child {
+        margin-bottom: 0;
+    }
+
+    .seat-layout {
+        overflow-x: auto;
+    }
+}
+
+/* 加载动画 */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.spinner-border {
+    animation: spin 1s linear infinite;
+}
+
+/* 悬浮提示 */
+[data-bs-toggle="tooltip"] {
+    cursor: help;
+}
+</style>
+{% endblock %}
