@@ -1,0 +1,28 @@
+# 每行最大字符数
+line-length = 88
+
+[lint]
+# 启用 recommended 规则集
+select = ["E", "F", "W", "I", "N", "B", "A", "C4", "UP", "RUF"]
+# 忽略的规则
+ignore = ["E501"]  # 忽略行长度限制
+
+# 排除的文件和目录
+exclude = [
+    ".venv",
+    "__pycache__",
+    "migrations",
+    "*.pyc",
+]
+
+[format]
+# 使用双引号
+quote-style = "double"
+# 缩进风格
+indent-style = "space"
+# 行尾风格
+line-ending = "auto"
+
+[lint.isort]
+# 排序导入
+known-first-party = ["app"]
