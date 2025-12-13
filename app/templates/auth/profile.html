@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block title %}个人资料 - 校园自习室预约系统{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">
+                    <i class="bi bi-person-circle"></i> 个人资料
+                </h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 text-center">
+                        <div class="mb-3">
+                            <i class="bi bi-person-circle" style="font-size: 5rem; color: #6c757d;"></i>
+                        </div>
+                        <h5>{{ user.full_name }}</h5>
+                        <p class="text-muted">{{ user.username }}</p>
+                    </div>
+                    <div class="col-md-8">
+                        <table class="table table-borderless">
+                            <tbody>
+                                <tr>
+                                    <td><strong>用户名：</strong></td>
+                                    <td>{{ user.username }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>真实姓名：</strong></td>
+                                    <td>{{ user.full_name }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>学号：</strong></td>
+                                    <td>{{ user.student_id }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>邮箱：</strong></td>
+                                    <td>{{ user.email }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>手机号：</strong></td>
+                                    <td>{{ user.phone or '未填写' }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>注册时间：</strong></td>
+                                    <td>{{ user.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>账户状态：</strong></td>
+                                    <td>
+                                        {% if user.is_active %}
+                                            <span class="badge bg-success">正常</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">已禁用</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <div class="d-flex justify-content-between">
+                    <a href="{{ url_for('booking.my_bookings') }}" class="btn btn-primary">
+                        <i class="bi bi-calendar-check"></i> 我的预约
+                    </a>
+                    <a href="{{ url_for('main.index') }}" class="btn btn-secondary">
+                        <i class="bi bi-house"></i> 返回首页
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 统计信息 -->
+        <div class="row mt-4">
+            <div class="col-md-4">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5 class="card-title text-primary">
+                            {% set active_bookings = user.get_active_bookings() %}
+                            {{ active_bookings|length }}
+                        </h5>
+                        <p class="card-text">当前预约</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5 class="card-title text-success">
+                            {% set completed_count = user.bookings.filter_by(status='completed').count() %}
+                            {{ completed_count }}
+                        </h5>
+                        <p class="card-text">已完成预约</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5 class="card-title text-info">
+                            {{ user.bookings.count() }}
+                        </h5>
+                        <p class="card-text">总预约次数</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>关于我们 - 电子科技大学成都学院自习室预约系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .main-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            margin: 2rem auto;
+            padding: 2rem;
+            max-width: 1000px;
+        }
+        .hero-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 3rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -10%;
+            width: 60%;
+            height: 200%;
+            background: rgba(255, 255, 255, 0.1);
+            transform: rotate(35deg);
+        }
+        .feature-card {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            margin-bottom: 1.5rem;
+            border: 1px solid #f0f0f0;
+            transition: all 0.3s ease;
+            height: 100%;
+        }
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+        .feature-icon {
+            font-size: 3rem;
+            color: #667eea;
+            margin-bottom: 1rem;
+        }
+        .timeline {
+            position: relative;
+            padding: 2rem 0;
+        }
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #667eea;
+            transform: translateX(-50%);
+        }
+        .timeline-item {
+            position: relative;
+            margin-bottom: 2rem;
+        }
+        .timeline-content {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            width: 45%;
+        }
+        .timeline-item:nth-child(odd) .timeline-content {
+            margin-left: auto;
+        }
+        .timeline-dot {
+            position: absolute;
+            left: 50%;
+            top: 1.5rem;
+            width: 20px;
+            height: 20px;
+            background: #667eea;
+            border-radius: 50%;
+            transform: translateX(-50%);
+            border: 4px solid white;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="main-container">
+            <!-- Hero Section -->
+            <div class="hero-section">
+                <h1 class="display-4 mb-4">
+                    <i class="bi bi-building"></i>
+                    关于我们
+                </h1>
+                <p class="lead mb-0">
+                    电子科技大学成都学院自习室预约系统 - 为学生提供便捷的座位管理服务
+                </p>
+            </div>
+
+            <!-- Introduction -->
+            <div class="row mb-5">
+                <div class="col-12">
+                    <div class="text-center mb-4">
+                        <h2 class="h1">我们的使命</h2>
+                        <p class="lead text-muted">
+                            致力于为电子科技大学成都学院的师生提供高效、便捷、智能的自习室预约服务
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Features -->
+            <div class="row mb-5">
+                <div class="col-md-4">
+                    <div class="feature-card text-center">
+                        <i class="bi bi-calendar-check feature-icon"></i>
+                        <h4>智能预约</h4>
+                        <p class="text-muted">
+                            支持在线预约自习室座位，系统自动管理座位状态，避免冲突和重复预约
+                        </p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-card text-center">
+                        <i class="bi bi-clock-history feature-icon"></i>
+                        <h4>实时管理</h4>
+                        <p class="text-muted">
+                            实时显示座位占用情况，支持时间段管理，提高自习室利用率
+                        </p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-card text-center">
+                        <i class="bi bi-bar-chart feature-icon"></i>
+                        <h4>数据分析</h4>
+                        <p class="text-muted">
+                            提供使用统计和分析报告，帮助管理员优化自习室资源配置
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Features -->
+            <div class="row mb-5">
+                <div class="col-12">
+                    <h2 class="text-center mb-4">系统特色</h2>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-start">
+                                <i class="bi bi-check-circle-fill text-success me-3" style="font-size: 1.5rem;"></i>
+                                <div>
+                                    <h5>用户友好界面</h5>
+                                    <p class="text-muted mb-0">简洁直观的操作界面，支持多种设备访问</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-start">
+                                <i class="bi bi-check-circle-fill text-success me-3" style="font-size: 1.5rem;"></i>
+                                <div>
+                                    <h5>权限管理</h5>
+                                    <p class="text-muted mb-0">完善的学生和管理员权限体系</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-start">
+                                <i class="bi bi-check-circle-fill text-success me-3" style="font-size: 1.5rem;"></i>
+                                <div>
+                                    <h5>实时通知</h5>
+                                    <p class="text-muted mb-0">预约状态变更及时通知用户</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-start">
+                                <i class="bi bi-check-circle-fill text-success me-3" style="font-size: 1.5rem;"></i>
+                                <div>
+                                    <h5>数据安全</h5>
+                                    <p class="text-muted mb-0">完善的数据保护机制，确保用户信息安全</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Technology Stack -->
+            <div class="row mb-5">
+                <div class="col-12">
+                    <h2 class="text-center mb-4">技术架构</h2>
+                    <div class="row">
+                        <div class="col-md-3 text-center mb-3">
+                            <div class="feature-card">
+                                <i class="bi bi-server" style="font-size: 2rem; color: #667eea;"></i>
+                                <h6 class="mt-2">Flask</h6>
+                                <p class="small text-muted mb-0">Web框架</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3 text-center mb-3">
+                            <div class="feature-card">
+                                <i class="bi bi-database" style="font-size: 2rem; color: #667eea;"></i>
+                                <h6 class="mt-2">SQLAlchemy</h6>
+                                <p class="small text-muted mb-0">数据库ORM</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3 text-center mb-3">
+                            <div class="feature-card">
+                                <i class="bi bi-bootstrap" style="font-size: 2rem; color: #667eea;"></i>
+                                <h6 class="mt-2">Bootstrap</h6>
+                                <p class="small text-muted mb-0">前端框架</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3 text-center mb-3">
+                            <div class="feature-card">
+                                <i class="bi bi-shield-check" style="font-size: 2rem; color: #667eea;"></i>
+                                <h6 class="mt-2">Flask-Login</h6>
+                                <p class="small text-muted mb-0">认证系统</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contact Information -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="text-center">
+                        <h3 class="mb-4">联系我们</h3>
+                        <p class="text-muted mb-3">
+                            如果您有任何问题或建议，请随时与我们联系
+                        </p>
+                        <div class="d-flex justify-content-center gap-4 flex-wrap">
+                            <a href="{{ url_for('main.contact') }}" class="btn btn-primary">
+                                <i class="bi bi-envelope"></i> 联系我们
+                            </a>
+                            <a href="{{ url_for('main.help') }}" class="btn btn-outline-primary">
+                                <i class="bi bi-question-circle"></i> 帮助中心
+                            </a>
+                            <a href="{{ url_for('main.rooms_list') }}" class="btn btn-success">
+                                <i class="bi bi-door-open"></i> 浏览自习室
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 页面加载动画
+        document.addEventListener('DOMContentLoaded', function() {
+            const featureCards = document.querySelectorAll('.feature-card');
+            featureCards.forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(30px)';
+                setTimeout(() => {
+                    card.style.transition = 'all 0.6s ease';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 200);
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block title %}首页 - 校园自习室预约系统{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="jumbotron bg-light p-5 rounded mb-4">
+            <h1 class="display-4">欢迎使用校园自习室预约系统</h1>
+            <p class="lead">便捷的座位预约，舒适的学习环境，让您的学习更有效率。</p>
+            {% if not current_user.is_authenticated %}
+            <hr class="my-4">
+            <p>开始使用我们的自习室预约服务吧！</p>
+            <a class="btn btn-primary btn-lg" href="{{ url_for('auth.login') }}" role="button">立即登录</a>
+            <a class="btn btn-outline-primary btn-lg" href="{{ url_for('auth.register') }}" role="button">注册账号</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <h2 class="mb-4">
+            <i class="bi bi-door-open"></i> 开放自习室
+            {% if current_user.is_authenticated %}
+            <a href="{{ url_for('booking.select_room') }}" class="btn btn-success float-end">
+                <i class="bi bi-calendar-plus"></i> 立即预约
+            </a>
+            {% endif %}
+        </h2>
+    </div>
+</div>
+
+<div class="row">
+    {% for room in study_rooms %}
+    <div class="col-md-6 col-lg-4 mb-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">
+                    {{ room.name }}
+                    <span class="badge bg-success ms-2">开放中</span>
+                </h5>
+                <p class="card-text">
+                    <i class="bi bi-geo-alt"></i> <strong>位置：</strong>{{ room.location }}<br>
+                    <i class="bi bi-clock"></i> <strong>开放时间：</strong>{{ room.open_time.strftime('%H:%M') }} - {{ room.close_time.strftime('%H:%M') }}<br>
+                    <i class="bi bi-grid-3x3"></i> <strong>座位数：</strong>{{ room.capacity }}个
+                </p>
+                {% if room.description %}
+                <p class="card-text text-muted">{{ room.description }}</p>
+                {% endif %}
+            </div>
+            {% if current_user.is_authenticated %}
+            <div class="card-footer">
+                <a href="{{ url_for('booking.select_seats', room_id=room.id) }}" class="btn btn-primary w-100">
+                    <i class="bi bi-calendar-plus"></i> 选择座位
+                </a>
+            </div>
+            {% else %}
+            <div class="card-footer">
+                <a href="{{ url_for('auth.login') }}" class="btn btn-outline-primary w-100">
+                    <i class="bi bi-box-arrow-in-right"></i> 登录后预约
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% else %}
+    <div class="col-12">
+        <div class="alert alert-info text-center">
+            <i class="bi bi-info-circle"></i> 暂无开放的自习室，请稍后再试。
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% if current_user.is_authenticated and current_booking %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="alert alert-info">
+            <h5><i class="bi bi-info-circle"></i> 当前预约状态</h5>
+            <p>您正在使用座位：<strong>{{ current_booking.seat.seat_number }}</strong>（{{ current_booking.seat.study_room.name }}）</p>
+            <p>请记得在离开时签退座位，方便其他同学使用。</p>
+            <a href="{{ url_for('booking.check_out', booking_id=current_booking.id) }}" class="btn btn-warning">
+                <i class="bi bi-box-arrow-left"></i> 签退座位
+            </a>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="row mt-5">
+    <div class="col-md-4">
+        <div class="text-center">
+            <i class="bi bi-shield-check text-primary" style="font-size: 3rem;"></i>
+            <h4 class="mt-3">安全可靠</h4>
+            <p>实名制预约，确保座位使用有序</p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="text-center">
+            <i class="bi bi-lightning text-warning" style="font-size: 3rem;"></i>
+            <h4 class="mt-3">快速便捷</h4>
+            <p>几步即可完成座位预约，省时省力</p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="text-center">
+            <i class="bi bi-graph-up text-success" style="font-size: 3rem;"></i>
+            <h4 class="mt-3">智能管理</h4>
+            <p>实时监控座位使用情况，提高利用率</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

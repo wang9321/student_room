@@ -1,0 +1,421 @@
+{% extends "common/base.html" %}
+
+{% block title %}用户管理 - 电子科技大学成都学院自习室预约系统{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- 页面标题 -->
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">用户管理</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <div class="btn-group me-2">
+                <a href="{{ url_for('admin.add_user') }}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> 添加学生
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 搜索和过滤 -->
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-md-4">
+                    <label for="search" class="form-label">搜索学生</label>
+                    <input type="text" class="form-control" id="search" name="search"
+                           value="{{ search }}" placeholder="学号、姓名、邮箱或专业">
+                </div>
+                <div class="col-md-3">
+                    <label for="status" class="form-label">状态</label>
+                    <select class="form-select" id="status" name="status">
+                        <option value="">全部状态</option>
+                        <option value="active" {% if status == 'active' %}selected{% endif %}>正常</option>
+                        <option value="suspended" {% if status == 'suspended' %}selected{% endif %}>禁用</option>
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary me-2">
+                        <i class="bi bi-search"></i> 搜索
+                    </button>
+                    <a href="{{ url_for('admin.users') }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-clockwise"></i> 重置
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 用户列表 -->
+    <div class="card shadow">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">学生列表</h6>
+        </div>
+        <div class="card-body">
+            {% if students %}
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                    <thead>
+                        <tr>
+                            <th>学号</th>
+                            <th>姓名</th>
+                            <th>邮箱</th>
+                            <th>专业</th>
+                            <th>班级</th>
+                            <th>信用积分</th>
+                            <th>状态</th>
+                            <th>注册时间</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for student in students %}
+                        <tr>
+                            <td>{{ student.student_id }}</td>
+                            <td>{{ student.name }}</td>
+                            <td>{{ student.email }}</td>
+                            <td>{{ student.major }}</td>
+                            <td>{{ student.class_name or '-' }}</td>
+                            <td>
+                                <span class="badge {% if student.credit_score >= 90 %}bg-success{% elif student.credit_score >= 60 %}bg-warning{% else %}bg-danger{% endif %}">
+                                    {{ student.credit_score }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if student.status == 'active' %}
+                                    <span class="badge bg-success">正常</span>
+                                {% elif student.status == 'suspended' %}
+                                    <span class="badge bg-danger">禁用</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ student.local_created_at.strftime('%Y-%m-%d') if student.local_created_at else student.created_at.strftime('%Y-%m-%d') }}</td>
+                            <td>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <button type="button" class="btn btn-outline-info"
+                                            onclick="viewUser({{ student.id }})" title="查看详情">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-outline-primary"
+                                            onclick="editUser({{ student.id }})" title="编辑">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <button type="button" class="btn {% if student.status == 'active' %}btn-outline-warning{% else %}btn-outline-success{% endif %}"
+                                            onclick="toggleStatus({{ student.id }})"
+                                            title="{% if student.status == 'active' %}禁用用户{% else %}启用用户{% endif %}">
+                                        <i class="bi {% if student.status == 'active' %}bi-lock{% else %}bi-unlock{% endif %}"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-outline-danger"
+                                            onclick="deleteUser({{ student.id }})" title="删除">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 分页 -->
+            {% if pagination.pages > 1 %}
+            <nav aria-label="用户列表分页">
+                <ul class="pagination justify-content-center">
+                    {% if pagination.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('admin.users', page=pagination.prev_num, search=search, status=status) }}">上一页</a>
+                    </li>
+                    {% endif %}
+
+                    {% for page_num in pagination.iter_pages() %}
+                        {% if page_num %}
+                            {% if page_num != pagination.page %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('admin.users', page=page_num, search=search, status=status) }}">{{ page_num }}</a>
+                            </li>
+                            {% else %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ page_num }}</span>
+                            </li>
+                            {% endif %}
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if pagination.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('admin.users', page=pagination.next_num, search=search, status=status) }}">下一页</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+            {% else %}
+            <div class="text-center py-4">
+                <i class="bi bi-people text-muted" style="font-size: 3rem;"></i>
+                <p class="text-muted mt-2">没有找到学生</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- 添加用户模态框 -->
+<div class="modal fade" id="addUserModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">添加学生</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="addUserForm">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="student_id" class="form-label">学号 *</label>
+                            <input type="text" class="form-control" id="student_id" name="student_id" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="name" class="form-label">姓名 *</label>
+                            <input type="text" class="form-control" id="name" name="name" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="email" class="form-label">邮箱 *</label>
+                            <input type="email" class="form-control" id="email" name="email" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="phone" class="form-label">手机号</label>
+                            <input type="tel" class="form-control" id="phone" name="phone">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="major" class="form-label">专业 *</label>
+                            <input type="text" class="form-control" id="major" name="major" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="grade" class="form-label">年级</label>
+                            <input type="text" class="form-control" id="grade" name="grade" placeholder="如：2024级">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="class_name" class="form-label">班级</label>
+                            <input type="text" class="form-control" id="class_name" name="class_name">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="password" class="form-label">密码</label>
+                            <input type="password" class="form-control" id="password" name="password" placeholder="默认为123456">
+                            <div class="form-text">留空则使用默认密码：123456</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary">添加学生</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 用户详情模态框 -->
+<div class="modal fade" id="userDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">学生详情</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="userDetails">
+                <!-- 用户详情将通过AJAX加载 -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 添加用户表单处理
+document.getElementById('addUserForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const formData = new FormData(this);
+    const data = Object.fromEntries(formData);
+
+    fetch('{{ url_for("admin.add_user") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            utils.showToast(result.message, 'success');
+            bootstrap.Modal.getInstance(document.getElementById('addUserModal')).hide();
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            utils.showToast(result.message, 'error');
+        }
+    })
+    .catch(error => {
+        utils.showToast('操作失败', 'error');
+    });
+});
+
+// 查看用户详情
+function viewUser(studentId) {
+    const modal = new bootstrap.Modal(document.getElementById('userDetailModal'));
+    document.getElementById('userDetails').innerHTML = '<div class="text-center"><div class="spinner-border"></div></div>';
+    modal.show();
+
+    // 发送真实的AJAX请求获取用户详情
+    fetch(`/admin/api/user_detail/${studentId}`)
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            const user = result.data;
+            const creditBadgeClass = user.credit_score >= 90 ? 'bg-success' :
+                                   user.credit_score >= 60 ? 'bg-warning' : 'bg-danger';
+            const statusBadgeClass = user.status === 'active' ? 'bg-success' : 'bg-danger';
+            const statusText = user.status === 'active' ? '正常' : '禁用';
+
+            document.getElementById('userDetails').innerHTML = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>学号:</strong> ${user.student_id}</p>
+                        <p><strong>姓名:</strong> ${user.name}</p>
+                        <p><strong>邮箱:</strong> ${user.email}</p>
+                        <p><strong>手机:</strong> ${user.phone || '未填写'}</p>
+                        <p><strong>性别:</strong> ${user.gender}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>专业:</strong> ${user.major}</p>
+                        <p><strong>年级:</strong> ${user.grade}</p>
+                        <p><strong>班级:</strong> ${user.class_name}</p>
+                        <p><strong>信用积分:</strong> <span class="badge ${creditBadgeClass}">${user.credit_score}</span></p>
+                        <p><strong>账户状态:</strong> <span class="badge ${statusBadgeClass}">${statusText}</span></p>
+                    </div>
+                </div>
+                <hr>
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>注册时间:</strong> ${user.created_at}</p>
+                        <p><strong>最后登录:</strong> ${user.last_login}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>总预约次数:</strong> ${user.total_bookings}</p>
+                        <p><strong>违约次数:</strong> ${user.violation_count}</p>
+                    </div>
+                </div>
+                <hr>
+                <p><strong>预约统计:</strong></p>
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h4 class="text-primary">${user.booking_stats.total}</h4>
+                            <p class="text-muted">总预约次数</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h4 class="text-success">${user.booking_stats.completed}</h4>
+                            <p class="text-muted">完成次数</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h4 class="text-warning">${user.booking_stats.cancelled}</h4>
+                            <p class="text-muted">取消次数</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h4 class="text-info">${user.booking_stats.active + user.booking_stats.confirmed}</h4>
+                            <p class="text-muted">当前预约</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        } else {
+            document.getElementById('userDetails').innerHTML = `
+                <div class="alert alert-danger">
+                    获取用户详情失败: ${result.message}
+                </div>
+            `;
+        }
+    })
+    .catch(error => {
+        console.error('获取用户详情错误:', error);
+        document.getElementById('userDetails').innerHTML = `
+            <div class="alert alert-danger">
+                获取用户详情失败，请稍后重试
+            </div>
+        `;
+    });
+}
+
+// 编辑用户
+function editUser(studentId) {
+    window.location.href = `/admin/users/${studentId}/edit`;
+}
+
+// 切换用户状态
+function toggleStatus(studentId) {
+    if (confirm('确定要切换该用户的状态吗？')) {
+        fetch(`/admin/users/${studentId}/toggle-status`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                utils.showToast(result.message, 'success');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                utils.showToast(result.message, 'error');
+            }
+        })
+        .catch(error => {
+            utils.showToast('操作失败', 'error');
+        });
+    }
+}
+
+// 删除用户
+function deleteUser(studentId) {
+    if (confirm('确定要删除该学生吗？此操作不可恢复！')) {
+        fetch(`/admin/users/${studentId}/delete`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                utils.showToast(result.message, 'success');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                utils.showToast(result.message, 'error');
+            }
+        })
+        .catch(error => {
+            utils.showToast('操作失败', 'error');
+        });
+    }
+}
+
+</script>
+{% endblock %}

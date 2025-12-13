@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+
+{% block title %}选择座位 - 校园自习室预约系统{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2>
+            <i class="bi bi-grid-3x3"></i> 选择座位 - {{ room.name }}
+            <a href="{{ url_for('booking.select_room') }}" class="btn btn-secondary float-end">
+                <i class="bi bi-arrow-left"></i> 返回选择自习室
+            </a>
+        </h2>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    座位平面图
+                    <small class="text-muted">{{ room.location }}</small>
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i>
+                    <strong>开放时间：</strong>{{ room.open_time.strftime('%H:%M') }} - {{ room.close_time.strftime('%H:%M') }}
+                    <strong>总座位数：</strong>{{ room.capacity }}
+                </div>
+
+                <div class="seat-grid-container">
+                    {% for seat in room.seats.order_by('row', 'column') %}
+                    <div class="seat-item" data-seat-id="{{ seat.id }}" data-seat-type="{{ seat.seat_type }}">
+                        <div class="seat {% if not seat.is_available %}seat-unavailable{% endif %}">
+                            {{ seat.seat_number }}
+                            {% if seat.seat_type == 'window' %}
+                                <i class="bi bi-window seat-icon"></i>
+                            {% elif seat.seat_type == 'power' %}
+                                <i class="bi bi-lightning-charge seat-icon"></i>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">座位类型说明</h6>
+            </div>
+            <div class="card-body">
+                <div class="seat-type-list">
+                    <div class="seat-type-item">
+                        <span class="seat-type-icon">
+                            <i class="bi bi-square"></i>
+                        </span>
+                        <div>
+                            <strong>标准座位</strong>
+                            <p class="small text-muted mb-0">常规学习座位</p>
+                        </div>
+                    </div>
+                    <div class="seat-type-item">
+                        <span class="seat-type-icon">
+                            <i class="bi bi-window text-info"></i>
+                        </span>
+                        <div>
+                            <strong>靠窗座位</strong>
+                            <p class="small text-muted mb-0">采光好，视野开阔</p>
+                        </div>
+                    </div>
+                    <div class="seat-type-item">
+                        <span class="seat-type-icon">
+                            <i class="bi bi-lightning-charge text-warning"></i>
+                        </span>
+                        <div>
+                            <strong>电源座位</strong>
+                            <p class="small text-muted mb-0">配备电源插座</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="mb-0">提示</h6>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled small">
+                    <li><i class="bi bi-lightbulb text-warning"></i> 点击可用座位进行预约</li>
+                    <li><i class="bi bi-clock text-info"></i> 请在预约开始时间前15分钟内签到</li>
+                    <li><i class="bi bi-exclamation-triangle text-danger"></i> 超时未签到将自动取消</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.seat-grid-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+    gap: 10px;
+    margin: 20px 0;
+}
+
+.seat-item {
+    text-align: center;
+}
+
+.seat {
+    position: relative;
+    background: #28a745;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 15px 10px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 60px;
+}
+
+.seat:hover:not(.seat-unavailable) {
+    background: #218838;
+    transform: translateY(-2px);
+}
+
+.seat-unavailable {
+    background: #6c757d !important;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.seat-icon {
+    font-size: 12px;
+    margin-top: 2px;
+}
+
+.seat-type-list .seat-type-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.seat-type-icon {
+    margin-right: 10px;
+    font-size: 20px;
+    width: 30px;
+    text-align: center;
+}
+
+@media (max-width: 768px) {
+    .seat-grid-container {
+        grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+        gap: 5px;
+    }
+
+    .seat {
+        padding: 10px 5px;
+        font-size: 12px;
+        min-height: 50px;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const seats = document.querySelectorAll('.seat:not(.seat-unavailable)');
+
+    seats.forEach(seat => {
+        seat.addEventListener('click', function() {
+            const seatItem = this.closest('.seat-item');
+            const seatId = seatItem.dataset.seatId;
+
+            if (seatId) {
+                window.location.href = `/booking/book-seat/${seatId}`;
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

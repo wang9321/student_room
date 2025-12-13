@@ -1,0 +1,738 @@
+{% extends "common/base.html" %}
+
+{% block title %}预约座位 - 电子科技大学成都学院自习室预约系统{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- 页面标题 -->
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">预约座位</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <a href="{{ url_for('student.dashboard') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> 返回仪表板
+            </a>
+        </div>
+    </div>
+
+    <!-- 预约步骤指示器 -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 text-center">
+                            <div class="step-indicator active" id="step1">
+                                <div class="step-number">1</div>
+                                <div class="step-title">选择自习室</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <div class="step-indicator" id="step2">
+                                <div class="step-number">2</div>
+                                <div class="step-title">选择时间</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <div class="step-indicator" id="step3">
+                                <div class="step-number">3</div>
+                                <div class="step-title">选择座位</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <div class="step-indicator" id="step4">
+                                <div class="step-number">4</div>
+                                <div class="step-title">确认预约</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 预约表单 -->
+    <form id="bookingForm">
+        <div class="row">
+            <!-- 左侧：选择区域 -->
+            <div class="col-lg-8">
+                <!-- 步骤1: 选择自习室 -->
+                <div class="card shadow mb-4" id="step1Content">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">步骤 1: 选择自习室</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            {% for room in rooms %}
+                            <div class="col-md-6 mb-3">
+                                <div class="room-card" onclick="selectRoom({{ room.id }}, '{{ room.name }}')">
+                                    <div class="room-header">
+                                        <h6>{{ room.name }}</h6>
+                                        <small class="text-muted">{{ room.building }} {{ room.floor }}</small>
+                                    </div>
+                                    <div class="room-body">
+                                        <div class="room-stats">
+                                            <span class="stat-item">
+                                                <i class="bi bi-chair"></i> {{ room.capacity }}个座位
+                                            </span>
+                                            <span class="stat-item">
+                                                <i class="bi bi-check-circle text-success"></i> {{ room.available_seats_count }}可用
+                                            </span>
+                                        </div>
+                                        <p class="small text-muted">{{ room.description[:60] }}...</p>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 步骤2: 选择时间 -->
+                <div class="card shadow mb-4 d-none" id="step2Content">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">步骤 2: 选择预约时间</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label for="bookingDate" class="form-label">预约日期 *</label>
+                                <input type="date" class="form-control" id="bookingDate" name="booking_date"
+                                       min="{{ min_date }}" max="{{ max_date }}" required>
+                                <small class="form-text">只能预约今天到未来7天内的座位</small>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">快速选择时间段</label>
+                                <div class="d-flex flex-wrap gap-2">
+                                    {% for slot in time_slots %}
+                                    <button type="button" class="btn btn-outline-primary time-slot-btn"
+                                            onclick="selectTimeSlot('{{ slot.start_time.strftime('%H:%M') }}', '{{ slot.end_time.strftime('%H:%M') }}')">
+                                        {{ slot.slot_name }}
+                                    </button>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <label for="startTime" class="form-label">开始时间 *</label>
+                                <input type="time" class="form-control" id="startTime" name="start_time" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="endTime" class="form-label">结束时间 *</label>
+                                <input type="time" class="form-control" id="endTime" name="end_time" required>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <label for="purpose" class="form-label">学习用途（可选）</label>
+                                <input type="text" class="form-control" id="purpose" name="purpose"
+                                       placeholder="如：复习考试、写作业等">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 步骤3: 选择座位 -->
+                <div class="card shadow mb-4 d-none" id="step3Content">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">步骤 3: 选择座位</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <div class="btn-group" role="group">
+                                <input type="radio" class="btn-check" name="seatFilter" id="filterAll" checked>
+                                <label class="btn btn-outline-primary" for="filterAll">全部座位</label>
+
+                                <input type="radio" class="btn-check" name="seatFilter" id="filterAvailable">
+                                <label class="btn btn-outline-success" for="filterAvailable">仅可用</label>
+
+                                <input type="radio" class="btn-check" name="seatFilter" id="filterPower">
+                                <label class="btn btn-outline-info" for="filterPower">有电源</label>
+
+                                <input type="radio" class="btn-check" name="seatFilter" id="filterWindow">
+                                <label class="btn btn-outline-warning" for="filterWindow">靠窗</label>
+                            </div>
+                        </div>
+                        <div id="seatsContainer" class="seats-grid">
+                            <!-- 座位将通过AJAX加载 -->
+                            <div class="text-center py-4">
+                                <div class="spinner-border" role="status"></div>
+                                <p class="mt-2">正在加载座位信息...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 步骤4: 确认预约 -->
+                <div class="card shadow mb-4 d-none" id="step4Content">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">步骤 4: 确认预约信息</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>预约信息</h6>
+                                <table class="table table-borderless">
+                                    <tr>
+                                        <td><strong>自习室:</strong></td>
+                                        <td id="confirmRoom">-</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>座位号:</strong></td>
+                                        <td id="confirmSeat">-</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>日期:</strong></td>
+                                        <td id="confirmDate">-</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>时间:</strong></td>
+                                        <td id="confirmTime">-</td>
+                                    </tr>
+                                    {% if request.form.purpose %}
+                                    <tr>
+                                        <td><strong>用途:</strong></td>
+                                        <td id="confirmPurpose">-</td>
+                                    </tr>
+                                    {% endif %}
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="alert alert-info">
+                                    <h6><i class="bi bi-info-circle"></i> 预约须知</h6>
+                                    <ul class="small mb-0">
+                                        <li>请按时签到，预约开始前30分钟可签到</li>
+                                        <li>如需取消，请至少提前30分钟操作</li>
+                                        <li>未按时签到将扣除信用积分</li>
+                                        <li>请保持座位整洁，爱护公共设施</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-center mt-4">
+                            <button type="button" class="btn btn-primary me-2" onclick="submitBooking()">
+                                <i class="bi bi-check-circle"></i> 确认预约
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" onclick="goToStep(3)">
+                                <i class="bi bi-arrow-left"></i> 上一步
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧：选择摘要 -->
+            <div class="col-lg-4">
+                <div class="card shadow sticky-top" style="top: 90px; max-height: calc(100vh - 240px); overflow-y: auto; z-index: 900;">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">预约摘要</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="summary-item">
+                            <label class="form-label">自习室:</label>
+                            <p class="fw-bold" id="summaryRoom">未选择</p>
+                        </div>
+                        <div class="summary-item">
+                            <label class="form-label">座位:</label>
+                            <p class="fw-bold" id="summarySeat">未选择</p>
+                        </div>
+                        <div class="summary-item">
+                            <label class="form-label">日期:</label>
+                            <p class="fw-bold" id="summaryDate">未选择</p>
+                        </div>
+                        <div class="summary-item">
+                            <label class="form-label">时间:</label>
+                            <p class="fw-bold" id="summaryTime">未选择</p>
+                        </div>
+                        <div class="summary-item">
+                            <label class="form-label">时长:</label>
+                            <p class="fw-bold" id="summaryDuration">-</p>
+                        </div>
+
+                        <hr>
+
+                        <div class="d-grid">
+                            <button type="button" class="btn btn-outline-secondary mb-2" onclick="resetSelection()">
+                                <i class="bi bi-arrow-clockwise"></i> 重新选择
+                            </button>
+                            <button type="button" class="btn btn-success" id="nextStepBtn" onclick="nextStep()" disabled>
+                                下一步 <i class="bi bi-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- 座位详情模态框 -->
+<div class="modal fade" id="seatDetailModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">座位详情</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="seatDetailContent">
+                <!-- 座位详情内容 -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                <button type="button" class="btn btn-primary" id="selectSeatBtn">选择此座位</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let selectedRoom = null;
+let selectedRoomName = null;
+let selectedSeat = null;
+let selectedSeatNumber = null;
+let currentStep = 1;
+
+// 选择自习室
+function selectRoom(roomId, roomName) {
+    selectedRoom = roomId;
+    selectedRoomName = roomName;
+
+    // 更新UI
+    document.querySelectorAll('.room-card').forEach(card => {
+        card.classList.remove('selected');
+    });
+    event.currentTarget.classList.add('selected');
+
+    // 更新摘要
+    document.getElementById('summaryRoom').textContent = roomName;
+
+    // 启用下一步按钮
+    document.getElementById('nextStepBtn').disabled = false;
+}
+
+// 选择时间段
+function selectTimeSlot(startTime, endTime) {
+    document.getElementById('startTime').value = startTime;
+    document.getElementById('endTime').value = endTime;
+    updateSummary();
+}
+
+// 时间变化时更新摘要
+document.getElementById('bookingDate').addEventListener('change', updateSummary);
+document.getElementById('startTime').addEventListener('change', updateSummary);
+document.getElementById('endTime').addEventListener('change', updateSummary);
+
+function updateSummary() {
+    const date = document.getElementById('bookingDate').value;
+    const startTime = document.getElementById('startTime').value;
+    const endTime = document.getElementById('endTime').value;
+
+    document.getElementById('summaryDate').textContent = date || '未选择';
+    document.getElementById('summaryTime').textContent = (startTime && endTime) ? `${startTime} - ${endTime}` : '未选择';
+
+    // 计算时长
+    if (startTime && endTime) {
+        const start = new Date(`2000-01-01 ${startTime}`);
+        const end = new Date(`2000-01-01 ${endTime}`);
+        const duration = (end - start) / (1000 * 60 * 60); // 小时
+        document.getElementById('summaryDuration').textContent = `${duration}小时`;
+    }
+}
+
+// 下一步
+function nextStep() {
+    if (currentStep === 1 && !selectedRoom) {
+        utils.showToast('请先选择自习室', 'warning');
+        return;
+    }
+
+    if (currentStep === 2) {
+        const date = document.getElementById('bookingDate').value;
+        const startTime = document.getElementById('startTime').value;
+        const endTime = document.getElementById('endTime').value;
+
+        if (!date || !startTime || !endTime) {
+            utils.showToast('请完善时间信息', 'warning');
+            return;
+        }
+
+        if (startTime >= endTime) {
+            utils.showToast('结束时间必须晚于开始时间', 'warning');
+            return;
+        }
+    }
+
+    if (currentStep === 3 && !selectedSeat) {
+        utils.showToast('请先选择座位', 'warning');
+        return;
+    }
+
+    if (currentStep < 4) {
+        goToStep(currentStep + 1);
+    }
+}
+
+// 跳转到指定步骤
+function goToStep(step) {
+    // 隐藏所有步骤内容
+    for (let i = 1; i <= 4; i++) {
+        document.getElementById(`step${i}Content`).classList.add('d-none');
+        document.getElementById(`step${i}`).classList.remove('active');
+    }
+
+    // 显示当前步骤
+    document.getElementById(`step${step}Content`).classList.remove('d-none');
+    document.getElementById(`step${step}`).classList.add('active');
+
+    currentStep = step;
+
+    // 特殊处理
+    if (step === 3) {
+        loadSeats();
+    } else if (step === 4) {
+        showConfirmation();
+    }
+}
+
+// 加载座位
+function loadSeats() {
+    const date = document.getElementById('bookingDate').value;
+    const startTime = document.getElementById('startTime').value;
+    const endTime = document.getElementById('endTime').value;
+
+    if (!date || !startTime || !endTime) {
+        utils.showToast('请先选择时间', 'warning');
+        goToStep(2);
+        return;
+    }
+
+    const container = document.getElementById('seatsContainer');
+    container.innerHTML = '<div class="text-center py-4"><div class="spinner-border"></div><p class="mt-2">正在加载座位...</p></div>';
+
+    fetch(`/student/room/${selectedRoom}/seats?date=${date}&start_time=${startTime}&end_time=${endTime}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displaySeats(data.seats);
+            } else {
+                utils.showToast('加载座位失败', 'error');
+            }
+        })
+        .catch(error => {
+            utils.showToast('网络错误', 'error');
+            container.innerHTML = '<div class="text-center text-danger">加载失败，请重试</div>';
+        });
+}
+
+// 显示座位
+function displaySeats(seats) {
+    const container = document.getElementById('seatsContainer');
+    let html = '<div class="row">';
+
+    seats.forEach(seat => {
+        const seatClass = seat.is_available ? 'seat-available' : 'seat-unavailable';
+        const iconHtml = `
+            <i class="bi bi-${seat.power_socket ? 'lightning-charge' : 'chair'}"></i>
+            ${seat.window_seat ? '<i class="bi bi-sun"></i>' : ''}
+            ${seat.computer_available ? '<i class="bi bi-pc-display" title="有电脑"></i>' : ''}
+        `;
+
+        html += `
+            <div class="col-md-3 col-sm-4 col-6 mb-3">
+                <div class="seat-item ${seatClass}" onclick="selectSeat(${seat.id}, '${seat.seat_number}', ${seat.is_available})"
+                     data-seat-id="${seat.id}" data-seat-type="${seat.type}"
+                     data-power="${seat.power_socket}" data-window="${seat.window_seat}">
+                    <div class="seat-icon">${iconHtml}</div>
+                    <div class="seat-number">${seat.seat_number}</div>
+                    <div class="seat-type">${getTypeLabel(seat.type)}</div>
+                </div>
+            </div>
+        `;
+    });
+
+    html += '</div>';
+    container.innerHTML = html;
+
+    // 绑定座位过滤器
+    document.querySelectorAll('input[name="seatFilter"]').forEach(radio => {
+        radio.addEventListener('change', filterSeats);
+    });
+}
+
+// 获取座位类型标签
+function getTypeLabel(type) {
+    const labels = {
+        'regular': '普通',
+        'window': '靠窗',
+        'power': '电源',
+        'computer': '电脑'
+    };
+    return labels[type] || type;
+}
+
+// 选择座位
+function selectSeat(seatId, seatNumber, isAvailable) {
+    if (!isAvailable) {
+        utils.showToast('该座位不可用', 'warning');
+        return;
+    }
+
+    selectedSeat = seatId;
+    selectedSeatNumber = seatNumber;
+
+    // 更新UI
+    document.querySelectorAll('.seat-item').forEach(seat => {
+        seat.classList.remove('selected');
+    });
+    event.currentTarget.classList.add('selected');
+
+    // 更新摘要
+    document.getElementById('summarySeat').textContent = seatNumber;
+
+    // 启用下一步按钮
+    document.getElementById('nextStepBtn').disabled = false;
+}
+
+// 过滤座位
+function filterSeats() {
+    const filterType = document.querySelector('input[name="seatFilter"]:checked').id;
+    const seats = document.querySelectorAll('.seat-item');
+
+    seats.forEach(seat => {
+        const power = seat.dataset.power === 'true';
+        const window = seat.dataset.window === 'true';
+        const isAvailable = seat.classList.contains('seat-available');
+
+        let show = true;
+
+        switch (filterType) {
+            case 'filterAvailable':
+                show = isAvailable;
+                break;
+            case 'filterPower':
+                show = power && isAvailable;
+                break;
+            case 'filterWindow':
+                show = window && isAvailable;
+                break;
+        }
+
+        seat.style.display = show ? '' : 'none';
+    });
+}
+
+// 显示确认信息
+function showConfirmation() {
+    const date = document.getElementById('bookingDate').value;
+    const startTime = document.getElementById('startTime').value;
+    const endTime = document.getElementById('endTime').value;
+    const purpose = document.getElementById('purpose').value;
+
+    document.getElementById('confirmRoom').textContent = selectedRoomName;
+    document.getElementById('confirmSeat').textContent = selectedSeatNumber;
+    document.getElementById('confirmDate').textContent = date;
+    document.getElementById('confirmTime').textContent = `${startTime} - ${endTime}`;
+    if (purpose) {
+        document.getElementById('confirmPurpose').textContent = purpose;
+    }
+
+    // 隐藏下一步按钮
+    document.getElementById('nextStepBtn').style.display = 'none';
+}
+
+// 提交预约
+function submitBooking() {
+    const data = {
+        room_id: selectedRoom,
+        seat_id: selectedSeat,
+        booking_date: document.getElementById('bookingDate').value,
+        start_time: document.getElementById('startTime').value,
+        end_time: document.getElementById('endTime').value,
+        purpose: document.getElementById('purpose').value
+    };
+
+    fetch('/student/book_seat', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            utils.showToast(`预约成功！预约号：${result.booking_number}`, 'success');
+            setTimeout(() => {
+                window.location.href = '/student/my_bookings';
+            }, 2000);
+        } else {
+            utils.showToast(result.message, 'error');
+        }
+    })
+    .catch(error => {
+        utils.showToast('预约失败，请重试', 'error');
+    });
+}
+
+// 重置选择
+function resetSelection() {
+    selectedRoom = null;
+    selectedRoomName = null;
+    selectedSeat = null;
+    selectedSeatNumber = null;
+    currentStep = 1;
+
+    // 重置表单
+    document.getElementById('bookingForm').reset();
+
+    // 重置摘要
+    document.getElementById('summaryRoom').textContent = '未选择';
+    document.getElementById('summarySeat').textContent = '未选择';
+    document.getElementById('summaryDate').textContent = '未选择';
+    document.getElementById('summaryTime').textContent = '未选择';
+    document.getElementById('summaryDuration').textContent = '-';
+
+    // 重置UI
+    document.querySelectorAll('.room-card').forEach(card => {
+        card.classList.remove('selected');
+    });
+
+    // 显示第一步
+    goToStep(1);
+
+    // 重置按钮状态
+    document.getElementById('nextStepBtn').disabled = true;
+    document.getElementById('nextStepBtn').style.display = '';
+}
+</script>
+
+<style>
+/* 步骤指示器样式 */
+.step-indicator {
+    position: relative;
+}
+
+.step-indicator.active .step-number {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.step-indicator.active .step-title {
+    color: var(--primary-color);
+    font-weight: bold;
+}
+
+.step-number {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #e9ecef;
+    color: #6c757d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 10px;
+    font-weight: bold;
+    font-size: 18px;
+}
+
+/* 自习室卡片样式 */
+.room-card {
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    padding: 15px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    height: 100%;
+}
+
+.room-card:hover {
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.room-card.selected {
+    border-color: var(--primary-color);
+    background-color: rgba(0, 86, 179, 0.1);
+}
+
+.room-stats {
+    display: flex;
+    justify-content: space-between;
+    margin: 10px 0;
+}
+
+.stat-item {
+    font-size: 14px;
+}
+
+/* 座位网格样式 */
+.seats-grid {
+    min-height: 300px;
+}
+
+.seat-item {
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    padding: 10px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background-color: white;
+}
+
+.seat-item.seat-available:hover {
+    border-color: var(--success-color);
+    transform: translateY(-2px);
+}
+
+.seat-item.seat-unavailable {
+    background-color: #f8f9fa;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.seat-item.seat-available.selected {
+    border-color: var(--primary-color);
+    background-color: rgba(0, 86, 179, 0.1);
+}
+
+.seat-icon {
+    font-size: 24px;
+    color: #6c757d;
+    margin-bottom: 5px;
+}
+
+.seat-available .seat-icon {
+    color: var(--success-color);
+}
+
+.seat-number {
+    font-weight: bold;
+    margin-bottom: 3px;
+}
+
+.seat-type {
+    font-size: 12px;
+    color: #6c757d;
+}
+
+/* 摘要样式 */
+.summary-item {
+    margin-bottom: 15px;
+}
+
+.summary-item label {
+    font-weight: normal;
+    color: #6c757d;
+    margin-bottom: 5px;
+}
+
+.sticky-top {
+    position: sticky;
+}
+</style>
+{% endblock %}

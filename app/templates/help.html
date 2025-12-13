@@ -1,0 +1,502 @@
+{% extends "common/base.html" %}
+
+{% block title %}帮助中心 - 电子科技大学成都学院自习室预约系统{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- 页面标题 -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-gradient-primary text-white">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-question-circle me-3" style="font-size: 2rem;"></i>
+                        <div>
+                            <h2 class="mb-1">帮助中心</h2>
+                            <p class="mb-0 opacity-75">系统使用指南和常见问题解答</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 快速导航 -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-body">
+                    <h5 class="card-title">快速导航</h5>
+                    <div class="row">
+                        <div class="col-md-3 col-6 mb-3">
+                            <a href="#getting-started" class="btn btn-outline-primary w-100">
+                                <i class="bi bi-rocket-takeoff me-2"></i>快速开始
+                            </a>
+                        </div>
+                        <div class="col-md-3 col-6 mb-3">
+                            <a href="#booking-guide" class="btn btn-outline-success w-100">
+                                <i class="bi bi-calendar-check me-2"></i>预约指南
+                            </a>
+                        </div>
+                        <div class="col-md-3 col-6 mb-3">
+                            <a href="#rules" class="btn btn-outline-warning w-100">
+                                <i class="bi bi-shield-check me-2"></i>使用规则
+                            </a>
+                        </div>
+                        <div class="col-md-3 col-6 mb-3">
+                            <a href="#faq" class="btn btn-outline-info w-100">
+                                <i class="bi bi-question-square me-2"></i>常见问题
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 快速开始 -->
+    <div id="getting-started" class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header">
+                    <h4 class="card-title">
+                        <i class="bi bi-rocket-takeoff text-primary me-2"></i>快速开始
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>新用户注册</h5>
+                            <ol>
+                                <li>访问系统首页：<code>http://localhost:5000</code></li>
+                                <li>点击"学生登录"按钮</li>
+                                <li>使用学号和初始密码登录</li>
+                                <li>首次登录后建议修改密码</li>
+                            </ol>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>预约流程</h5>
+                            <ol>
+                                <li>登录学生账户</li>
+                                <li>浏览可用的自习室</li>
+                                <li>选择合适的日期和时间</li>
+                                <li>选择座位并确认预约</li>
+                                <li>按时签到使用</li>
+                            </ol>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info mt-3">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <strong>提示：</strong>学生初始登录信息为学号 <code>2024001</code>，密码 <code>student123</code>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 预约指南 -->
+    <div id="booking-guide" class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header">
+                    <h4 class="card-title">
+                        <i class="bi bi-calendar-check text-success me-2"></i>预约指南
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <h6><i class="bi bi-1-circle text-primary"></i> 选择自习室</h6>
+                            <ul>
+                                <li>查看自习室列表</li>
+                                <li>了解各自习室设施</li>
+                                <li>查看实时座位状态</li>
+                                <li>根据需求选择合适区域</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-4">
+                            <h6><i class="bi bi-2-circle text-primary"></i> 选择时间</h6>
+                            <ul>
+                                <li>选择预约日期</li>
+                                <li>设置开始和结束时间</li>
+                                <li>每次预约1-4小时</li>
+                                <li>可提前7天预约</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-4">
+                            <h6><i class="bi bi-3-circle text-primary"></i> 确认预约</h6>
+                            <ul>
+                                <li>选择具体座位</li>
+                                <li>填写使用用途</li>
+                                <li>确认预约信息</li>
+                                <li>保存预约成功</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <h6><i class="bi bi-4-circle text-primary"></i> 签到使用</h6>
+                            <ul>
+                                <li>预约开始前30分钟内签到</li>
+                                <li>签到后30分钟内必须到达</li>
+                                <li>迟到超过15分钟自动取消</li>
+                                <li>使用时请遵守纪律</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6><i class="bi bi-5-circle text-primary"></i> 结束预约</h6>
+                            <ul>
+                                <li>按时结束使用</li>
+                                <li>带走个人物品</li>
+                                <li>保持座位整洁</li>
+                                <li>评价使用体验</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 使用规则 -->
+    <div id="rules" class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header">
+                    <h4 class="card-title">
+                        <i class="bi bi-shield-check text-warning me-2"></i>使用规则
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>预约规则</h6>
+                            <ul class="list-group list-group-flush mb-3">
+                                <li class="list-group-item">
+                                    <i class="bi bi-check-circle text-success me-2"></i>
+                                    每天最多可预约2个时段
+                                </li>
+                                <li class="list-group-item">
+                                    <i class="bi bi-check-circle text-success me-2"></i>
+                                    每次预约时长1-4小时
+                                </li>
+                                <li class="list-group-item">
+                                    <i class="bi bi-check-circle text-success me-2"></i>
+                                    可提前7天预约座位
+                                </li>
+                                <li class="list-group-item">
+                                    <i class="bi bi-check-circle text-success me-2"></i>
+                                    取消预约需提前1小时
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>使用规范</h6>
+                            <ul class="list-group list-group-flush mb-3">
+                                <li class="list-group-item">
+                                    <i class="bi bi-volume-mute text-primary me-2"></i>
+                                    保持安静，禁止喧哗
+                                </li>
+                                <li class="list-group-item">
+                                    <i class="bi bi-phone text-danger me-2"></i>
+                                    手机调至静音或震动
+                                </li>
+                                <li class="list-group-item">
+                                    <i class="bi bi-ban text-warning me-2"></i>
+                                    禁止饮食（饮用水除外）
+                                </li>
+                                <li class="list-group-item">
+                                    <i class="bi bi-heart text-info me-2"></i>
+                                    爱护公共设施和环境
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- 信用积分制度 -->
+                    <div class="alert alert-warning">
+                        <h6><i class="bi bi-exclamation-triangle me-2"></i>信用积分制度</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>积分奖励：</strong></p>
+                                <ul>
+                                    <li>按时签到完成预约：+2分</li>
+                                    <li>连续一周无违规：+5分</li>
+                                    <li>主动报告设施问题：+3分</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>积分扣除：</strong></p>
+                                <ul>
+                                    <li>未签到预约：-5分</li>
+                                    <li>超时使用：-3分</li>
+                                    <li>违规使用：-5-10分</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <small class="text-muted">信用积分低于80分将限制预约功能</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 常见问题 -->
+    <div id="faq" class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header">
+                    <h4 class="card-title">
+                        <i class="bi bi-question-square text-info me-2"></i>常见问题
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="accordion" id="faqAccordion">
+                        <!-- Q1 -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="faq1">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse1">
+                                    <strong>Q1: 忘记密码怎么办？</strong>
+                                </button>
+                            </h2>
+                            <div id="collapse1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    可以联系图书馆管理员重置密码，或使用系统的"忘记密码"功能。管理员联系方式：admin@cduest.edu.cn
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Q2 -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="faq2">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse2">
+                                    <strong>Q2: 为什么无法预约座位？</strong>
+                                </button>
+                            </h2>
+                            <div id="collapse2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    可能的原因：1）信用积分低于80分；2）已有未完成的违规记录；3）同时预约的时段超过限制；4）选择的时段已被预约。请检查个人状态或联系管理员。
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Q3 -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="faq3">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse3">
+                                    <strong>Q3: 预约后可以取消吗？</strong>
+                                </button>
+                            </h2>
+                            <div id="collapse3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    可以在预约开始前1小时取消预约。频繁取消预约会影响信用积分。如需取消，请在"我的预约"页面操作。
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Q4 -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="faq4">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse4">
+                                    <strong>Q4: 迟到了怎么办？</strong>
+                                </button>
+                            </h2>
+                            <div id="collapse4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    预约开始后15分钟内仍可签到，超过15分钟将自动取消预约并扣除信用积分。建议合理安排时间，避免迟到。
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Q5 -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="faq5">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse5">
+                                    <strong>Q5: 如何提高信用积分？</strong>
+                                </button>
+                            </h2>
+                            <div id="collapse5" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    按时签到完成预约、连续保持良好使用记录、主动报告设施问题等都可以获得积分奖励。请遵守使用规则，保持良好的使用习惯。
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Q6 -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="faq6">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse6">
+                                    <strong>Q6: 系统出现故障怎么办？</strong>
+                                </button>
+                            </h2>
+                            <div id="collapse6" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    请截图保存错误信息，并及时联系技术支持。技术支持电话：028-12345678，邮箱：support@cduest.edu.cn。工作时间：周一至周五 8:30-17:30。
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 联系信息 -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header">
+                    <h5 class="card-title">
+                        <i class="bi bi-telephone me-2"></i>联系我们
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <h6>图书馆服务台</h6>
+                            <p><i class="bi bi-geo-alt text-danger me-2"></i>地点：图书馆一楼大厅</p>
+                            <p><i class="bi bi-telephone text-success me-2"></i>电话：028-12345678</p>
+                            <p><i class="bi bi-clock text-primary me-2"></i>服务时间：8:00-22:00</p>
+                        </div>
+                        <div class="col-md-4">
+                            <h6>在线支持</h6>
+                            <p><i class="bi bi-envelope text-info me-2"></i>邮箱：support@cduest.edu.cn</p>
+                            <p><i class="bi bi-chat-dots text-warning me-2"></i>在线客服：工作日 9:00-17:00</p>
+                            <p><i class="bi bi-globe text-primary me-2"></i>网站：www.cduest.edu.cn</p>
+                        </div>
+                        <div class="col-md-4">
+                            <h6>紧急联系</h6>
+                            <p><i class="bi bi-exclamation-triangle text-danger me-2"></i>系统故障：028-87654321</p>
+                            <p><i class="bi bi-shield-check text-success me-2"></i>安全保卫：028-11223344</p>
+                            <p><i class="bi bi-heart text-info me-2"></i>医疗急救：120</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 返回顶部按钮 -->
+<button id="backToTop" class="btn btn-primary position-fixed bottom-0 end-0 m-3" style="display: none; z-index: 1000;">
+    <i class="bi bi-arrow-up"></i>
+</button>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 返回顶部功能
+document.addEventListener('DOMContentLoaded', function() {
+    const backToTopButton = document.getElementById('backToTop');
+
+    // 监听滚动事件
+    window.addEventListener('scroll', function() {
+        if (window.pageYOffset > 300) {
+            backToTopButton.style.display = 'block';
+        } else {
+            backToTopButton.style.display = 'none';
+        }
+    });
+
+    // 点击返回顶部
+    backToTopButton.addEventListener('click', function() {
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    });
+
+    // 平滑滚动到锚点
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                target.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        });
+    });
+});
+
+// FAQ展开/收起动画优化
+document.querySelectorAll('.accordion-button').forEach(button => {
+    button.addEventListener('click', function() {
+        const collapse = this.nextElementSibling;
+        const isExpanded = this.classList.contains('collapsed');
+
+        if (!isExpanded) {
+            setTimeout(() => {
+                collapse.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'nearest'
+                });
+            }, 150);
+        }
+    });
+});
+</script>
+
+<style>
+.bg-gradient-primary {
+    background: linear-gradient(135deg, var(--primary-color) 0%, #004494 100%) !important;
+}
+
+.accordion-button:not(.collapsed) {
+    background-color: #e7f3ff;
+    color: var(--primary-color);
+}
+
+#backToTop {
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    transition: all 0.3s ease;
+}
+
+#backToTop:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+}
+
+.list-group-item {
+    border-left: 3px solid transparent;
+    padding-left: 1.5rem;
+}
+
+.list-group-item:hover {
+    background-color: #f8f9fa;
+    border-left-color: var(--primary-color);
+}
+
+.alert {
+    border-left: 4px solid;
+}
+
+.alert-warning {
+    border-left-color: #ffc107;
+}
+
+.alert-info {
+    border-left-color: #17a2b8;
+}
+
+/* 平滑滚动 */
+html {
+    scroll-behavior: smooth;
+}
+
+/* 锚点偏移 */
+[id] {
+    scroll-margin-top: 80px;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,469 @@
+{% extends "common/base.html" %}
+
+{% block title %}管理员仪表板 - 电子科技大学成都学院自习室预约系统{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- 页面标题 -->
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">管理员仪表板</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <div class="btn-group me-2">
+                <a href="{{ url_for('admin.export') }}" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-download"></i> 导出数据
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 统计卡片 -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">学生总数</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.total_students or 0 }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-people text-primary" style="font-size: 2rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">自习室总数</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.total_rooms or 0 }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-door-open text-success" style="font-size: 2rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">今日预约</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.today_bookings or 0 }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-calendar-check text-info" style="font-size: 2rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">座位使用率</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ "%.1f"|format((stats.occupied_seats or 0) * 100 / (stats.total_seats or 1)) }}%</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-graph-up text-warning" style="font-size: 2rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 主要内容区域 -->
+    <div class="row">
+        <!-- 左侧：最近预约 -->
+        <div class="col-lg-8 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">最近预约记录</h6>
+                    <a href="{{ url_for('admin.bookings') }}" class="btn btn-sm btn-primary">查看全部</a>
+                </div>
+                <div class="card-body">
+                    {% if recent_bookings %}
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>预约编号</th>
+                                    <th>学生</th>
+                                    <th>座位</th>
+                                    <th>时间</th>
+                                    <th>状态</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for booking in recent_bookings %}
+                                <tr>
+                                    <td>{{ booking.booking_number }}</td>
+                                    <td>{{ booking.student.name }} ({{ booking.student.student_id }})</td>
+                                    <td>{{ booking.seat.seat_number }}</td>
+                                    <td>{{ booking.start_time.strftime('%m-%d %H:%M') }}</td>
+                                    <td>
+                                        {% if booking.status == 'active' %}
+                                            <span class="badge bg-success">使用中</span>
+                                        {% elif booking.status == 'completed' %}
+                                            <span class="badge bg-primary">已完成</span>
+                                        {% elif booking.status == 'cancelled' %}
+                                            <span class="badge bg-secondary">已取消</span>
+                                        {% elif booking.status == 'no_show' %}
+                                            <span class="badge bg-danger">未到场</span>
+                                        {% elif booking.status == 'confirmed' %}
+                                            <span class="badge bg-info">已确认</span>
+                                        {% else %}
+                                            <span class="badge bg-warning">{{ booking.status }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <button type="button" class="btn btn-outline-info" onclick="viewBooking({{ booking.id }})">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                            {% if booking.status == 'active' %}
+                                            <button type="button" class="btn btn-outline-warning" onclick="cancelBooking({{ booking.id }})">
+                                                <i class="bi bi-x-circle"></i>
+                                            </button>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-calendar-x text-muted" style="font-size: 3rem;"></i>
+                        <p class="text-muted mt-2">暂无预约记录</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧：系统信息和快速操作 -->
+        <div class="col-lg-4 mb-4">
+            <!-- 系统状态 -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">系统状态</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center mb-3">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success mb-1">系统运行</div>
+                            <div class="progress">
+                                <div class="progress-bar bg-success" role="progressbar" style="width: 100%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="small text-muted">
+                        <p><i class="bi bi-database"></i> 数据库: 正常</p>
+                        <p><i class="bi bi-clock"></i> 运行时间: {{ uptime or '未知' }}</p>
+                        <p><i class="bi bi-calendar"></i> 最后更新: {{ last_update or '未知' }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 快速操作 -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">快速操作</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('admin.users') }}" class="btn btn-outline-primary">
+                            <i class="bi bi-person-plus"></i> 添加学生
+                        </a>
+                        <a href="{{ url_for('admin.rooms') }}" class="btn btn-outline-success">
+                            <i class="bi bi-plus-circle"></i> 新增自习室
+                        </a>
+                        <a href="{{ url_for('admin.announcements') }}" class="btn btn-outline-info">
+                            <i class="bi bi-megaphone"></i> 发布公告
+                        </a>
+                        <a href="{{ url_for('admin.export') }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-download"></i> 数据导出
+                        </a>
+                        <button type="button" class="btn btn-outline-warning" onclick="refreshData()">
+                            <i class="bi bi-arrow-clockwise"></i> 刷新数据
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 最新公告 -->
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">最新公告</h6>
+                </div>
+                <div class="card-body">
+                    {% if announcements %}
+                    {% for announcement in announcements[:3] %}
+                    <div class="mb-3 {% if not loop.last %}border-bottom{% endif %}">
+                        <h6 class="small mb-1">{{ announcement.title }}</h6>
+                        <p class="small text-muted mb-1">{{ announcement.content[:50] }}...</p>
+                        <small class="text-muted">{{ announcement.publish_date.strftime('%m-%d %H:%M') }}</small>
+                    </div>
+                    {% endfor %}
+                    {% else %}
+                    <p class="text-muted small">暂无公告</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 模态框：预约详情 -->
+<div class="modal fade" id="bookingModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">预约详情</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="bookingDetails">
+                <!-- 预约详情将通过AJAX加载 -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 查看预约详情
+function viewBooking(bookingId) {
+    // 显示加载状态
+    const modal = new bootstrap.Modal(document.getElementById('bookingModal'));
+    document.getElementById('bookingDetails').innerHTML = '<div class="text-center"><div class="spinner-border"></div><p class="mt-2">加载中...</p></div>';
+    modal.show();
+
+    // 发送AJAX请求获取真实预约详情
+    fetch(`/admin/api/booking_detail/${bookingId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const booking = data.data;
+                let statusBadge = '';
+
+                // 根据状态显示不同的徽章
+                switch(booking.status) {
+                    case 'active':
+                        statusBadge = '<span class="badge bg-success">使用中</span>';
+                        break;
+                    case 'completed':
+                        statusBadge = '<span class="badge bg-primary">已完成</span>';
+                        break;
+                    case 'cancelled':
+                        statusBadge = '<span class="badge bg-secondary">已取消</span>';
+                        break;
+                    case 'no_show':
+                        statusBadge = '<span class="badge bg-danger">未到场</span>';
+                        break;
+                    case 'confirmed':
+                        statusBadge = '<span class="badge bg-info">已确认</span>';
+                        break;
+                    default:
+                        statusBadge = `<span class="badge bg-warning">${booking.status}</span>`;
+                }
+
+                document.getElementById('bookingDetails').innerHTML = `
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">预约编号:</label>
+                            <p class="form-control-plaintext">${booking.booking_number}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">状态:</label>
+                            <p>${statusBadge}</p>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">学生姓名:</label>
+                            <p class="form-control-plaintext">${booking.student.name}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">学号:</label>
+                            <p class="form-control-plaintext">${booking.student.student_id}</p>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">邮箱:</label>
+                            <p class="form-control-plaintext">${booking.student.email || '未填写'}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">电话:</label>
+                            <p class="form-control-plaintext">${booking.student.phone || '未填写'}</p>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">自习室:</label>
+                            <p class="form-control-plaintext">${booking.seat.room} (${booking.seat.room_number})</p>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">座位号:</label>
+                            <p class="form-control-plaintext">${booking.seat.seat_number}</p>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">预约时间:</label>
+                        <p class="form-control-plaintext">${booking.booking_info.start_time} - ${booking.booking_info.end_time}</p>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">预约时长:</label>
+                            <p class="form-control-plaintext">${booking.booking_info.duration_hours} 小时</p>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">预约用途:</label>
+                            <p class="form-control-plaintext">${booking.booking_info.purpose || '未填写'}</p>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">签到时间:</label>
+                            <p class="form-control-plaintext">${booking.check_in_time || '未签到'}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">签退时间:</label>
+                            <p class="form-control-plaintext">${booking.check_out_time || '未签退'}</p>
+                        </div>
+                    </div>
+                    ${booking.cancel_reason ? `
+                    <div class="mb-3">
+                        <label class="form-label">取消原因:</label>
+                        <p class="form-control-plaintext">${booking.cancel_reason}</p>
+                    </div>
+                    ` : ''}
+                    <div class="mb-3">
+                        <label class="form-label">预约创建时间:</label>
+                        <p class="form-control-plaintext text-muted">${booking.created_at}</p>
+                    </div>
+                `;
+            } else {
+                document.getElementById('bookingDetails').innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        ${data.message || '获取预约详情失败'}
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('bookingDetails').innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    网络错误，请稍后重试
+                </div>
+            `;
+        });
+}
+
+// 取消预约
+function cancelBooking(bookingId) {
+    if (confirm('确定要取消这个预约吗？')) {
+        // 显示加载状态
+        const button = event.target.closest('button');
+        const originalHtml = button.innerHTML;
+        button.innerHTML = '<div class="spinner-border spinner-border-sm" role="status"></div>';
+        button.disabled = true;
+
+        // 发送取消请求
+        const formData = new FormData();
+        formData.append('booking_id', bookingId);
+
+        fetch('/admin/api/cancel_booking', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                if (typeof utils !== 'undefined' && utils.showToast) {
+                    utils.showToast(data.message || '预约取消成功', 'success');
+                } else {
+                    alert(data.message || '预约取消成功');
+                }
+                setTimeout(() => {
+                    location.reload();
+                }, 1000);
+            } else {
+                if (typeof utils !== 'undefined' && utils.showToast) {
+                    utils.showToast(data.message || '取消失败', 'error');
+                } else {
+                    alert(data.message || '取消失败');
+                }
+                // 恢复按钮状态
+                button.innerHTML = originalHtml;
+                button.disabled = false;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            if (typeof utils !== 'undefined' && utils.showToast) {
+                utils.showToast('网络错误，请稍后重试', 'error');
+            } else {
+                alert('网络错误，请稍后重试');
+            }
+            // 恢复按钮状态
+            button.innerHTML = originalHtml;
+            button.disabled = false;
+        });
+    }
+}
+
+// 刷新数据
+function refreshData() {
+    utils.showToast('数据刷新中...', 'info');
+    setTimeout(() => {
+        location.reload();
+    }, 1000);
+}
+
+// 页面加载完成后的初始化
+document.addEventListener('DOMContentLoaded', function() {
+    // 设置定时刷新（每5分钟）
+    setInterval(() => {
+        console.log('自动刷新数据...');
+        // 这里可以发送AJAX请求更新统计数据
+    }, 300000);
+});
+</script>
+
+<style>
+.border-left-primary {
+    border-left: 4px solid var(--primary-color) !important;
+}
+.border-left-success {
+    border-left: 4px solid var(--success-color) !important;
+}
+.border-left-info {
+    border-left: 4px solid var(--info-color) !important;
+}
+.border-left-warning {
+    border-left: 4px solid var(--warning-color) !important;
+}
+</style>
+{% endblock %}

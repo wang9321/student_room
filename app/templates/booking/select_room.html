@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title %}选择自习室 - 校园自习室预约系统{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2>
+            <i class="bi bi-door-open"></i> 选择自习室
+            <a href="{{ url_for('main.index') }}" class="btn btn-secondary float-end">
+                <i class="bi bi-arrow-left"></i> 返回
+            </a>
+        </h2>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">选择要预约的自习室</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    {{ form.hidden_tag() }}
+
+                    <div class="mb-3">
+                        {{ form.room_id.label(class="form-label") }}
+                        {{ form.room_id(class="form-select" + (" is-invalid" if form.room_id.errors else "")) }}
+                        {% if form.room_id.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.room_id.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="d-grid">
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">预约规则</h6>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled small">
+                    <li><i class="bi bi-check-circle text-success"></i> 每次最长4小时</li>
+                    <li><i class="bi bi-check-circle text-success"></i> 最多提前7天预约</li>
+                    <li><i class="bi bi-check-circle text-success"></i> 需按时签到</li>
+                    <li><i class="bi bi-check-circle text-success"></i> 可提前取消</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="mb-0">快速操作</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('booking.my_bookings') }}" class="btn btn-outline-primary">
+                        <i class="bi bi-calendar-check"></i> 我的预约
+                    </a>
+                    <a href="{{ url_for('main.help') }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-question-circle"></i> 使用帮助
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">自习室信息</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for room in rooms %}
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100 border-primary">
+                                <div class="card-body">
+                                    <h6 class="card-title">{{ room.name }}</h6>
+                                    <p class="card-text small">
+                                        <i class="bi bi-geo-alt"></i> {{ room.location }}<br>
+                                        <i class="bi bi-clock"></i> {{ room.open_time.strftime('%H:%M') }} - {{ room.close_time.strftime('%H:%M') }}<br>
+                                        <i class="bi bi-grid-3x3"></i> {{ room.capacity }}个座位
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

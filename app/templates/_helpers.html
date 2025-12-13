@@ -1,0 +1,19 @@
+<!-- 辅助模板宏 -->
+{% macro is_active_page(path) %}
+    {% set active = False %}
+    {% if request.endpoint %}
+        {% if path == request.endpoint or path.startswith(request.endpoint.rsplit('.', 1)[0]) %}
+            {% set active = True %}
+        {% endif %}
+    {% endif %}
+    {{ 'active' if active else '' }}
+{% endmacro %}
+
+{% macro nav_item(url, label, icon) %}
+    <li class="nav-item">
+        <a class="nav-link {{ is_active_page(url) }}" href="{{ url }}">
+            {% if icon %}<i class="bi bi-{{ icon }}"></i>{% endif %}
+            {{ label }}
+        </a>
+    </li>
+{% endmacro %}
