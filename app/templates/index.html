@@ -1,0 +1,161 @@
+{% extends "common/optimized_base.html" %}
+
+{% block content %}
+<!-- 首页横幅 -->
+<div class="hero-section text-white py-5 mb-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h1 class="display-4 fw-bold">电子科技大学成都学院</h1>
+                <h2 class="h2 mb-4">自习室预约管理系统</h2>
+                <p class="lead mb-4">
+                    为全校师生提供便捷的自习室预约服务，营造良好的学习环境
+                </p>
+                {% if not current_user.is_authenticated %}
+                <div class="d-flex gap-3">
+                    <a href="{{ url_for('auth.student_login') }}" class="btn btn-light btn-lg">
+                        <i class="bi bi-person"></i> 学生登录
+                    </a>
+                    <a href="{{ url_for('auth.register') }}" class="btn btn-success btn-lg">
+                        <i class="bi bi-person-plus"></i> 学生注册
+                    </a>
+                    <a href="{{ url_for('auth.admin_login') }}" class="btn btn-outline-light btn-lg">
+                        <i class="bi bi-shield-lock"></i> 管理员
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+            <div class="col-lg-6 text-center">
+                <i class="bi bi-book" style="font-size: 150px; opacity: 0.8;"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <!-- 统计数据 - 使用静态数据提高加载速度 -->
+    <div class="row mb-5">
+        <div class="col-md-3 mb-3">
+            <div class="card bg-info text-white lazy-load">
+                <div class="card-body text-center">
+                    <i class="bi bi-door-open" style="font-size: 2rem;"></i>
+                    <h3 class="card-title">{{ total_rooms }}</h3>
+                    <p class="card-text">自习室总数</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card bg-success text-white lazy-load">
+                <div class="card-body text-center">
+                    <i class="bi bi-chair" style="font-size: 2rem;"></i>
+                    <h3 class="card-title">{{ total_seats }}</h3>
+                    <p class="card-text">座位总数</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card bg-warning text-white lazy-load">
+                <div class="card-body text-center">
+                    <i class="bi bi-check-circle" style="font-size: 2rem;"></i>
+                    <h3 class="card-title">{{ available_seats }}</h3>
+                    <p class="card-text">可用座位</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card bg-secondary text-white lazy-load">
+                <div class="card-body text-center">
+                    <i class="bi bi-people" style="font-size: 2rem;"></i>
+                    <h3 class="card-title">{{ total_seats - available_seats }}</h3>
+                    <p class="card-text">已占用座位</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- 系统公告 -->
+        <div class="col-lg-8 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-megaphone"></i> 系统公告</h5>
+                </div>
+                <div class="card-body">
+                    {% if announcements %}
+                        {% for announcement in announcements %}
+                        <div class="mb-3">
+                            <h6>{{ announcement.title }}</h6>
+                            <p class="text-muted small">
+                                <i class="bi bi-calendar"></i> {{ announcement.publish_date.strftime('%Y-%m-%d %H:%M') }}
+                                {% if announcement.priority == 'high' %}
+                                <span class="badge bg-danger">重要</span>
+                                {% endif %}
+                            </p>
+                            <p class="card-text">{{ announcement.content[:100] }}{% if announcement.content|length > 100 %}...{% endif %}</p>
+                            {% if loop.last %}{% else %}<hr>{% endif %}
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted">暂无系统公告</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- 快速导航 -->
+        <div class="col-lg-4 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0"><i class="bi bi-grid"></i> 快速导航</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('main.rooms_list') }}" class="btn btn-outline-primary">
+                            <i class="bi bi-door-open"></i> 浏览自习室
+                        </a>
+                        {% if current_user.is_authenticated and current_user.__class__.__name__ == 'Student' %}
+                        <a href="{{ url_for('student.dashboard') }}" class="btn btn-outline-success">
+                            <i class="bi bi-person"></i> 个人中心
+                        </a>
+                        <a href="{{ url_for('student.my_bookings') }}" class="btn btn-outline-info">
+                            <i class="bi bi-calendar-check"></i> 我的预约
+                        </a>
+                        {% elif current_user.is_authenticated and current_user.__class__.__name__ == 'Admin' %}
+                        <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline-success">
+                            <i class="bi bi-gear"></i> 管理后台
+                        </a>
+                        {% endif %}
+                        <a href="{{ url_for('main.help') }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-question-circle"></i> 使用帮助
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            {% if current_user.is_authenticated and current_user.__class__.__name__ == 'Student' %}
+            <!-- 我的预约（学生） -->
+            <div class="card mt-3">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0"><i class="bi bi-calendar-check"></i> 我的预约</h6>
+                </div>
+                <div class="card-body">
+                    {% if user_bookings %}
+                        {% for booking in user_bookings %}
+                        <div class="mb-2">
+                            <small class="text-muted">
+                                座位: {{ booking.seat.seat_number }}<br>
+                                时间: {{ booking.start_time.strftime('%m-%d %H:%M') }} - {{ booking.end_time.strftime('%H:%M') }}
+                            </small>
+                        </div>
+                        {% if not loop.last %}<hr>{% endif %}
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted small">暂无预约记录</p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
